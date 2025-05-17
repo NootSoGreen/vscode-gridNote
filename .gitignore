@@ -1,0 +1,8 @@
+node_modules
+
+#output
+out
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

@@ -1,0 +1,68 @@
+{
+    "name": "grid-note-extension",
+    "version": "0.0.1",
+    "description": "Note editor with grid layout for VS Code",
+    "license": "GPL-3.0-or-later",
+    "author": "MattWasHere",
+    "publisher": "MattWasHere",
+    "icon": "icons/logo.png",
+    "private": true,
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "note"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "customEditors": [
+            {
+                "viewType": "gridNote.gdNote",
+                "displayName": "Grid Note",
+                "selector": [
+                    {
+                        "filenamePattern": "*.gdNote"
+                    }
+                ]
+            }
+        ],
+        "languages": [
+            {
+                "id": "gridNote",
+                "extensions": [
+                    ".gdNote"
+                ]
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "lint": "eslint",
+        "watch": "tsc -w -p ./",
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "format": "prettier --write .",
+        "pkg": "vsce package"
+    },
+    "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^5.0.3",
+        "@types/node": "^20",
+        "@types/vscode": "^1.73.0",
+        "prettier": "^3.4.2",
+        "prettier-plugin-svelte": "^3.3.2",
+        "svelte": "^5.28.2",
+        "typescript": "^5.8.2",
+        "vite": "^6.0.5"
+    },
+    "dependencies": {
+        "@vscode/codicons": "0.0.20",
+        "@vscode/vsce": "^3.3.2",
+        "dompurify": "^3.2.3",
+        "marked": "^15.0.5"
+    }
+}

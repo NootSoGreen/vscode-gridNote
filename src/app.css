@@ -1,0 +1,54 @@
+:root {
+    font-family: Helvetica, Arial, sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    --note-yellow: #fae96d;
+    --note-green: #019b53;
+    --note-blue: #0a5baa;
+    --note-pink: #7a3f58;
+    --note-grey: #8c8784;
+}
+
+body {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.iconBtn {
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.5rem;
+    width: 1.5rem;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    border-radius: 5px;
+    border: 0;
+    padding: 0;
+    color: var(--vscode-editor-foreground);
+}
+
+.iconBtn.selected {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.iconBtn:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.title {
+    font-size: 12px;
+}
+
+.codicon {
+    color: var(--content-color-secondary);
+}

@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "CommonJS",
+        "esModuleInterop": true,
+        "target": "ESNext",
+        "lib": ["ESNext", "DOM"],
+        "outDir": "out",
+        "sourceMap": true,
+        "strict": true,
+        "rootDir": "src",
+        "moduleResolution": "node",
+        "typeRoots": ["./node_modules/@types"]
+    },
+    "exclude": ["node_modules", ".vscode-test"]
+}
