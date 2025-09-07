@@ -218,7 +218,7 @@
                     bind:value={note.rowSpan}
                 />
             </div>
-            <div>
+            <div style="margin-bottom: 10px;">
                 <label for="displayTitle"> Display Title Bar</label>
                 <input
                     type="checkbox"
@@ -281,7 +281,8 @@
         padding: 0.5rem;
         border-radius: 0.25rem;
         margin-top: 0.5rem;
-        background-color: var(--vscode-notebook-cellEditorBackground);
+        background-color: var(--vscode-input-background);
+        margin-bottom: 10px;
     }
 
     .btn-color {
@@ -296,6 +297,24 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .note-settings-input > input {
+        color: var(--vscode-input-foreground);
+        background-color: var(--vscode-input-background);
+        outline-color: var(--vscode-focusBorder);
+        height: 24px;
+        padding: 3px 6px 3px 6px;
+        box-sizing: border-box;
+        border: 0;
+        border-radius: 2px;
+        width: 100%;
+        flex: 1;
+    }
+
+    .note-settings-input > label {
+        padding-right: 6px;
     }
 
     .note-content {
@@ -312,11 +331,7 @@
     .note-content.margin-right {
         width: calc(100% - 1rem);
         padding-right: 0.5rem;
-    }
-
-    .note-content > div {
-        width: calc(100% - 1rem);
-        padding-right: 0.5rem;
+        background-color: var(--vscode-notebook-cellEditorBackground);
     }
 
     .note-content > textarea {
@@ -387,22 +402,11 @@
         cursor: nwse-resize;
         background: linear-gradient(
             -45deg,
-            var(--vscode-editor-foreground) 10%,
-            var(--vscode-editor-foreground),
-            #0000,
-            #0000 20%,
-            var(--vscode-editor-foreground) 20%,
-            var(--vscode-editor-foreground),
-            #0000,
-            #0000 30%,
-            var(--vscode-editor-foreground) 30%,
-            var(--vscode-editor-foreground),
-            #0000,
-            #0000 40%,
-            var(--vscode-editor-foreground) 40%,
-            var(--vscode-editor-foreground),
-            #0000,
-            #0000 50%
+            #0000 0 35%,
+            var(--vscode-editor-foreground) 35% 38%,
+            #0000 38% 43%,
+            var(--vscode-editor-foreground) 43% 46%,
+            #0000 46% 100%
         );
     }
 

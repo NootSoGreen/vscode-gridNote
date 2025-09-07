@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { getNonce } from "./util";
 
+import { modify } from "jsonc-parser";
+
 interface Note {
     row: number;
     col: number;
@@ -27,15 +29,62 @@ interface Note {
  * - Synchronizing changes between a text document and a custom editor.
  */
 export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
+    private static panel: vscode.WebviewPanel;
+
     public static register(
         context: vscode.ExtensionContext
-    ): vscode.Disposable {
+    ): vscode.Disposable[] {
         const provider = new GridNoteEditorProvider(context);
-        const providerRegistration = vscode.window.registerCustomEditorProvider(
-            GridNoteEditorProvider.viewType,
-            provider
+
+        let subscriptions = [];
+        //providerRegistration
+
+        subscriptions.push(
+            vscode.window.registerCustomEditorProvider(
+                GridNoteEditorProvider.viewType,
+                provider,
+                { webviewOptions: { enableFindWidget: true } }
+            )
         );
-        return providerRegistration;
+
+        subscriptions.push(
+            vscode.commands.registerCommand("gridNote.toggleSettings", () => {
+                GridNoteEditorProvider.panel.webview.postMessage({
+                    type: "toggleSettings",
+                });
+            })
+        );
+
+        //init gridNote.gravityOn to false
+        vscode.commands.executeCommand("setContext", "gravityOn", false);
+
+        //add gravity mode command
+        subscriptions.push(
+            vscode.commands.registerCommand("gridNote.gravityModeOn", () => {
+                GridNoteEditorProvider.panel.webview.postMessage({
+                    type: "setSort",
+                    text: 0,
+                });
+                vscode.commands.executeCommand("setContext", "gravityOn", true);
+            })
+        );
+
+        //add free move mode command
+        subscriptions.push(
+            vscode.commands.registerCommand("gridNote.gravityModeOff", () => {
+                GridNoteEditorProvider.panel.webview.postMessage({
+                    type: "setSort",
+                    text: 1,
+                });
+                vscode.commands.executeCommand(
+                    "setContext",
+                    "gravityOn",
+                    false
+                );
+            })
+        );
+
+        return subscriptions;
     }
 
     private static readonly viewType = "gridNote.gdNote";
@@ -46,8 +95,6 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
 
     /**
      * Called when our custom editor is opened.
-     *
-     *
      */
     public async resolveCustomTextEditor(
         document: vscode.TextDocument,
@@ -61,6 +108,8 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         webviewPanel.webview.html = this.getHtmlForWebview(
             webviewPanel.webview
         );
+
+        GridNoteEditorProvider.panel = webviewPanel;
 
         const updateWebview = () => {
             let curDocState = document.getText();
@@ -104,7 +153,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
                     return;
                 case "update":
                     console.log("updating note...");
-                    this.updateNote(document, e.id, e.prop, e.value);
+                    this.updateDoc(document, e.path, e.value);
                     return;
 
                 case "delete":
@@ -112,7 +161,10 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
                     return;
             }
         });
-
+        console.log("initial_load");
+        //this.documentState may already be set if file was opened previously, but webview itself will be cleared.
+        //  Need to ensure data is sent to webview on initial load
+        this.documentState = "";
         updateWebview();
     }
 
@@ -178,11 +230,9 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
     }
 
     /**
-     * Add a new scratch to the current document.
+     * Add a new note to the current document.
      */
     private addNote(document: vscode.TextDocument, props: Note) {
-        const json = this.getDocumentAsJson(document);
-
         let id = crypto.randomUUID();
 
         let toAdd = {
@@ -198,54 +248,15 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
             displayTitle: props.type ?? true,
         };
 
-        if (json.hasOwnProperty("notes")) {
-            json.notes[id] = toAdd;
-        } else {
-            json.notes = { id: toAdd };
-        }
-
-        return this.updateTextDocument(document, json);
-    }
-
-    /**
-     * Update a note in the current document.
-     */
-    private updateNote(
-        document: vscode.TextDocument,
-        id: string,
-        prop: string,
-        value: any
-        //toUpdate: object
-    ) {
-        const json = this.getDocumentAsJson(document);
-        if (!json.notes.hasOwnProperty(id)) {
-            return;
-        }
-
-        json.notes[id][prop] = value;
-
-        //store state to check when document updates
-        this.documentState = JSON.stringify(json);
-
-        return this.updateTextDocument(document, json);
+        //TODO check if path will be created if it doesn't exist i.e. if notes key doesn't exist yet
+        this.updateDoc(document, ["notes", id], { id: toAdd });
     }
 
     /**
      * Delete an existing note from the current document.
      */
     private deleteNote(document: vscode.TextDocument, id: string) {
-        const json = this.getDocumentAsJson(document);
-        console.log("test");
-        if (!json.notes.hasOwnProperty(id)) {
-            console.log("failed to find ID to delete");
-            return;
-        }
-
-        delete json.notes[id];
-
-        console.log(json.notes[id]);
-
-        return this.updateTextDocument(document, json);
+        this.updateDoc(document, ["notes", id], undefined);
     }
 
     /**
@@ -281,5 +292,34 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         );
 
         return vscode.workspace.applyEdit(edit);
+    }
+
+    /**
+     * Update document with changes
+     */
+    private updateDoc(
+        document: vscode.TextDocument,
+        path: (string | number)[],
+        value: any
+    ) {
+        let curState = this.getDocumentAsJson(document);
+
+        //store state to check when document updates
+        this.documentState = curState;
+
+        let edits = modify(document.getText(), path, value, {
+            formattingOptions: { insertSpaces: true, tabSize: 2 },
+        });
+
+        const workspaceEdit = new vscode.WorkspaceEdit();
+
+        for (const edit of edits) {
+            const start = document.positionAt(edit.offset);
+            const end = document.positionAt(edit.offset + edit.length);
+            const range = new vscode.Range(start, end);
+            workspaceEdit.replace(document.uri, range, edit.content);
+        }
+
+        vscode.workspace.applyEdit(workspaceEdit);
     }
 }

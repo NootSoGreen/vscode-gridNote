@@ -5,7 +5,7 @@
     "license": "GPL-3.0-or-later",
     "author": "MattWasHere",
     "publisher": "MattWasHere",
-    "icon": "icons/logo.png",
+    "icon": "icons/gridNote-icon.png",
     "private": true,
     "engines": {
         "vscode": "^1.74.0"
@@ -34,9 +34,52 @@
                 "id": "gridNote",
                 "extensions": [
                     ".gdNote"
-                ]
+                ],
+                "icon": {
+                    "dark": "icons/gridNote-icon.svg",
+                    "light": "icons/gridNote-icon.svg"
+                }
             }
-        ]
+        ],
+        "commands": [
+            {
+                "command": "gridNote.toggleSettings",
+                "title": "Toggle Grid Note Settings",
+                "category": "Grid Note",
+                "icon": "$(settings-gear)"
+            },
+            {
+                "command": "gridNote.gravityModeOn",
+                "title": "Notes To Top",
+                "category": "Grid Note",
+                "icon": "$(fold-up)"
+            },
+            {
+                "command": "gridNote.gravityModeOff",
+                "title": "Free Move Notes",
+                "category": "Grid Note",
+                "icon": "$(move)"
+            }
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "gridNote.toggleSettings",
+                    "when": "activeCustomEditorId == 'gridNote.gdNote'",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gridNote.gravityModeOn",
+                    "when": "activeCustomEditorId == 'gridNote.gdNote' && gravityOn == false",
+                    "group": "navigation@0"
+                },
+                {
+                    "command": "gridNote.gravityModeOff",
+                    "when": "activeCustomEditorId == 'gridNote.gdNote' && gravityOn == true",
+                    "group": "navigation@0"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
@@ -63,6 +106,7 @@
         "@vscode/codicons": "0.0.20",
         "@vscode/vsce": "^3.3.2",
         "dompurify": "^3.2.3",
+        "jsonc-parser": "^3.3.1",
         "marked": "^15.0.5"
     }
 }

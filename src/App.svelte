@@ -25,6 +25,9 @@
 
     // Handle messages sent from the extension to the webview
     window.addEventListener("message", (event) => {
+        console.log("message received");
+        console.log(event);
+
         const message = event.data; // The json data that the extension sent
         const text = message.text;
         switch (message.type) {
@@ -35,8 +38,6 @@
                 break;
 
             case "update":
-                console.log("message received");
-
                 //text should be "{notes:[<noteId>: <Note_Obj>], settings: {columns: <+int>}}"
                 let updatedPage = JSON.parse(text);
 
@@ -74,6 +75,13 @@
                 let toDelete = JSON.parse(text);
                 page.deleteNote(toDelete);
                 break;
+            case "toggleSettings":
+                showSettings = !showSettings;
+                break;
+            case "setSort":
+                console.log(JSON.parse(text));
+                sortIndex = JSON.parse(text);
+                break;
         }
     });
 
@@ -88,33 +96,6 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <main class="full">
-    <header class="header">
-        <span class="header-inner">
-            <div>
-                <!--<span class="title">Grid Note</span>-->
-            </div>
-        </span>
-        <span class="header-inner">
-            <button
-                title={sortTypes[sortIndex].label}
-                aria-label="sort"
-                class="iconBtn"
-                onclick={() =>
-                    (sortIndex =
-                        sortIndex++ >= sortTypes.length - 1 ? 0 : sortIndex)}
-            >
-                <i class="codicon codicon-{sortTypes[sortIndex].icon}"></i>
-            </button>
-            <button
-                title="settings"
-                aria-label="page settings"
-                class="iconBtn {showSettings ? 'active' : ''}"
-                onclick={() => (showSettings = !showSettings)}
-            >
-                <i class="codicon codicon-settings-gear"></i>
-            </button>
-        </span>
-    </header>
     <div class="content">
         <Grid {page} {sortIndex}></Grid>
         <SettingsMenu {page} {showSettings}></SettingsMenu>
@@ -122,34 +103,10 @@
 </main>
 
 <style>
-    .title {
-        color: var(--content-color-secondary);
-    }
-
     .content {
         display: flex;
         width: 100vw;
-        height: calc(100vh - 2rem);
-    }
-
-    .header {
-        height: 2rem;
-        padding: 0.5rem;
-        width: 100%;
-        box-sizing: border-box;
-        /*border-bottom: 1px solid var(--vscode-editor-foreground);*/
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .header-inner {
-        display: flex;
-        align-items: center;
-        margin-left: 0.5rem;
-    }
-
-    .header-inner > * {
-        margin-right: 0.5rem;
+        height: 100vh;
     }
 
     .full {

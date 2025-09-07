@@ -2,6 +2,9 @@ import { setContext, getContext } from "svelte";
 
 let vscode;
 
+/**
+ * Class representing note
+ */
 export class Note {
     _note = $state({});
     #id;
@@ -15,7 +18,14 @@ export class Note {
     #title = $state("");
     #type = $state("markdown");
     #displayTitle = $state(true);
+
+    /**
+     * Create note
+     * @param {Object} obj
+     * @param {String} id
+     */
     constructor(obj, id) {
+        console.log(obj);
         this.#id = id;
         this.#col = obj.col ?? 1;
         this.#row = obj.row ?? 1;
@@ -29,100 +39,189 @@ export class Note {
         this.#displayTitle = obj.type ?? true;
     }
 
+    /**
+     * Id of note
+     * @type {String}
+     */
     get id() {
         return this.#id;
     }
 
+    /**
+     * x position of note (top left)
+     * @type {Number}
+     */
     get col() {
         return this.#col;
     }
 
+    /**
+     * x position of note (top left)
+     * @param {Number} col
+     */
     set col(col) {
         this._updateProp("col", col);
         this.#col = col;
     }
 
+    /**
+     * y position of note (top left)
+     * @type {Number}
+     */
     get row() {
         return this.#row;
     }
 
+    /**
+     * y position of note (top left)
+     * @param {Number} row
+     */
     set row(row) {
         this._updateProp("row", row);
         this.#row = row;
     }
 
+    /**
+     * Col Span of Note
+     * @type {Number}
+     */
     get colSpan() {
         return this.#colSpan;
     }
 
+    /**
+     * Row Span of Note
+     * @param {Number} colSpan
+     */
     set colSpan(colSpan) {
         this._updateProp("colSpan", colSpan);
         this.#colSpan = colSpan;
     }
 
+    /**
+     * Row Span of Note
+     * @type {Number}
+     */
     get rowSpan() {
         return this.#rowSpan;
     }
 
+    /**
+     * Row Span of Note
+     * @param {Number} rowSpan
+     */
     set rowSpan(rowSpan) {
         this._updateProp("rowSpan", rowSpan);
         this.#rowSpan = rowSpan;
     }
 
+    /**
+     * Note accent color
+     * @type {String}
+     */
     get color() {
         return this.#color;
     }
 
+    /**
+     * Note accent color
+     * @param {String} color
+     */
     set color(color) {
         this._updateProp("color", color);
         this.#color = color;
     }
 
+    /**
+     * Main content of note
+     * @type {String}
+     */
     get content() {
         return this.#content;
     }
 
+    /**
+     * Main content of note
+     * @param {String} content
+     */
     set content(content) {
         this._updateProp("content", content);
         this.#content = content;
     }
 
+    /**
+     * Timestamp of last edit
+     * @type {Number}
+     */
     get lastEdit() {
         return this.#lastEdit;
     }
 
+    /**
+     * Timestamp of last edit
+     * @param {Number} lastEdit
+     */
     set lastEdit(lastEdit) {
         this._updateProp("lastEdit", lastEdit);
         this.#lastEdit = lastEdit;
     }
 
+    /**
+     * Get title of note
+     * @type {String}
+     */
     get title() {
         return this.#title;
     }
 
+    /**
+     * Set Note's title
+     * @param {String} title
+     */
     set title(title) {
         this._updateProp("title", title);
         this.#title = title;
     }
 
+    /**
+     * Get type of note
+     * @type {String}
+     */
     get type() {
         return this.#type;
     }
 
+    /**
+     * Set type of note
+     * @param {String} type
+     */
     set type(type) {
         this._updateProp("type", type);
         this.#type = type;
     }
 
+    /**
+     * Display title?
+     * @type {Boolean}
+     */
     get displayTitle() {
         return this.#displayTitle;
     }
 
+    /**
+     * Display title?
+     * @param {Boolean} displayTitle
+     */
     set displayTitle(displayTitle) {
         this._updateProp("displayTitle", displayTitle);
         this.#displayTitle = displayTitle;
     }
 
+    /**
+     * Send message to update property
+     * @param {String} prop - property/key to update
+     * @param {any} value
+     */
     _updateProp(prop, value) {
         console.log("updating", { prop: value });
         vscode.postMessage({
@@ -130,11 +229,30 @@ export class Note {
             id: this.#id,
             prop: prop,
             value: value,
+            path: ["notes", this.#id, prop],
         });
     }
 
-    //There must be a better way to do this :/
+    /**
+     * Updates note - there must be a better way to do this :/
+     * Can't just use setter as setter triggers update message, which we would want to avoid here
+     * @param {Object} newState - object with updated properties of note
+     */
     updateState(newState) {
+        console.log("old", {
+            row: this.row,
+            col: this.col,
+            rowSpan: this.rowSpan,
+            colSpan: this.colSpan,
+            color: this.color,
+            content: this.content,
+            lastEdit: this.lastEdit,
+            title: this.title,
+            type: this.type,
+        });
+
+        console.log("new", newState);
+
         if (newState.row != this.#row) {
             this.#row = newState.row;
         }
@@ -173,30 +291,56 @@ export class Note {
     }
 }
 
+/**
+ * Page Settings
+ */
 export class PageSettings {
     #columns = $state(6);
 
+    /**
+     * Init page settings
+     * @param {Object} obj - object providing no. columns for page
+     */
     constructor(obj) {
         this.#columns = obj?.columns ?? 6;
     }
 
+    /**
+     * Set no. columns of page
+     * @type {Number}
+     */
     get columns() {
         return this.#columns;
     }
 
+    /**
+     * Get no. columns of page
+     * @param {Number} cols
+     */
     set columns(cols) {
         this.#columns = cols;
     }
 }
 
+/**
+ * Page
+ */
 export class Page {
     _page = $state({});
     #settings = $state();
 
+    /**
+     * Init page
+     * @param {Object} obj - object providing notes of page
+     */
     constructor(obj) {
         this.initNotes(obj);
     }
 
+    /**
+     * Notes Object
+     * @type {Object}
+     */
     get notes() {
         return this._page;
     }
@@ -205,6 +349,15 @@ export class Page {
         return this.#settings;
     }
 
+    /**
+     * Adds new note
+     *
+     * @param {Number} [col=1] col
+     * @param {Number} [row=1] row
+     * @param {Number} [colSpan=1] colSpan
+     * @param {Number} [rowSpan=1] rowSpan
+     * @param {String} [type="markdown"] type
+     */
     addNoteMsg(col = 1, row = 1, colSpan = 1, rowSpan = 1, type = "markdown") {
         let toAdd = {
             col,
@@ -218,18 +371,39 @@ export class Page {
         vscode.postMessage({ type: "add", toAdd: toAdd });
     }
 
+    /**
+     * Adds new note
+     *
+     * @param {String} id
+     * @param {Object} obj
+     */
     addNote(id, obj) {
-        this._page[id] = new Note(obj);
+        this._page[id] = new Note(obj, id);
     }
 
+    /**
+     * Sends message of note deletion
+     *
+     * @param {String} id
+     */
     deleteNoteMsg(id) {
         vscode.postMessage({ type: "delete", id: id });
     }
 
+    /**
+     * Deletes note
+     *
+     * @param {String} id
+     */
     deleteNote(id) {
         delete this._page[id];
     }
 
+    /**
+     * Initialises note
+     *
+     * @param {Object} obj
+     */
     initNotes(obj) {
         for (let note in obj?.notes) {
             this._page[note] = new Note(obj.notes[note], note);
@@ -238,6 +412,11 @@ export class Page {
         this.#settings = new PageSettings(obj?.settings);
     }
 
+    /**
+     * Returns notes in an array
+     *
+     * @returns {Array}
+     */
     noteList() {
         return Object.keys(this._page);
     }

@@ -7,46 +7,59 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <nav class="side-bar {showSettings ? '' : 'hidden'}">
-    <span class="side-bar-title">
-        <span class="title">Settings</span>
-    </span>
+    <h2 class="side-bar-title">SETTINGS</h2>
     <div class="content">
-        <span
-            >Columns:<input
+        <p class="input-row">
+            <label for="columns">Columns</label>
+            <input
+                name="columns"
                 type="number"
                 bind:value={page.settings.columns}
-            /></span
-        >
+            />
+        </p>
     </div>
 </nav>
 
 <style>
-    .content {
-        padding: 0.5rem;
-    }
-
     .side-bar {
         display: flex;
         flex-direction: column;
         width: 20vw;
-        height: calc(100vh - 4rem);
         overflow-y: auto;
         box-sizing: border-box;
-        border-left: 1px solid var(--vscode-editor-foreground);
+        background-color: var(--vscode-sideBar-background);
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     .side-bar-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        height: 4rem;
+        font-size: 11px;
+        font-weight: 400;
     }
 
-    .side-bar-title > .title {
-        margin-left: 1rem;
+    input {
+        color: var(--vscode-input-foreground);
+        background-color: var(--vscode-input-background);
+        outline-color: var(--vscode-focusBorder);
+        height: 24px;
+        padding: 3px 6px 3px 6px;
+        box-sizing: border-box;
+        border: 0;
+        border-radius: 2px;
+        width: 100%;
+        flex: 1;
     }
 
-    .side-bar-title > * {
-        margin-right: 0.5rem;
+    label {
+        padding-right: 6px;
+    }
+
+    .input-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 </style>
