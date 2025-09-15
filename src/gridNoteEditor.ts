@@ -153,7 +153,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
                     return;
                 case "update":
                     console.log("updating note...");
-                    this.updateDoc(document, e.path, e.value);
+                    this.updateDocMulti(document, e.data);
                     return;
 
                 case "delete":
@@ -249,7 +249,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         };
 
         //TODO check if path will be created if it doesn't exist i.e. if notes key doesn't exist yet
-        this.updateDoc(document, ["notes", id], { id: toAdd });
+        this.updateDoc(document, ["notes", id], toAdd);
     }
 
     /**
@@ -318,6 +318,31 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
             const end = document.positionAt(edit.offset + edit.length);
             const range = new vscode.Range(start, end);
             workspaceEdit.replace(document.uri, range, edit.content);
+        }
+
+        vscode.workspace.applyEdit(workspaceEdit);
+    }
+    /**
+     * Update document with multiple changes
+     */
+    private updateDocMulti(document: vscode.TextDocument, updates: any) {
+        let curState = this.getDocumentAsJson(document);
+
+        //store state to check when document updates
+        this.documentState = curState;
+
+        const workspaceEdit = new vscode.WorkspaceEdit();
+
+        for (let update of updates) {
+            let edits = modify(document.getText(), update.path, update.value, {
+                formattingOptions: { insertSpaces: true, tabSize: 2 },
+            });
+            for (const edit of edits) {
+                const start = document.positionAt(edit.offset);
+                const end = document.positionAt(edit.offset + edit.length);
+                const range = new vscode.Range(start, end);
+                workspaceEdit.replace(document.uri, range, edit.content);
+            }
         }
 
         vscode.workspace.applyEdit(workspaceEdit);

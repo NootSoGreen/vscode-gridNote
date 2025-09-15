@@ -18,6 +18,8 @@ export class Note {
     #title = $state("");
     #type = $state("markdown");
     #displayTitle = $state(true);
+    #countUpdates = 0;
+    #updates = {};
 
     /**
      * Create note
@@ -25,6 +27,7 @@ export class Note {
      * @param {String} id
      */
     constructor(obj, id) {
+        //console.trace();
         console.log(obj);
         this.#id = id;
         this.#col = obj.col ?? 1;
@@ -60,8 +63,10 @@ export class Note {
      * @param {Number} col
      */
     set col(col) {
-        this._updateProp("col", col);
-        this.#col = col;
+        if (this.#col != col) {
+            this._updateProp("col", col);
+            this.#col = col;
+        }
     }
 
     /**
@@ -77,8 +82,10 @@ export class Note {
      * @param {Number} row
      */
     set row(row) {
-        this._updateProp("row", row);
-        this.#row = row;
+        if (this.#row != row) {
+            this._updateProp("row", row);
+            this.#row = row;
+        }
     }
 
     /**
@@ -94,8 +101,10 @@ export class Note {
      * @param {Number} colSpan
      */
     set colSpan(colSpan) {
-        this._updateProp("colSpan", colSpan);
-        this.#colSpan = colSpan;
+        if (this.#colSpan != colSpan) {
+            this._updateProp("colSpan", colSpan);
+            this.#colSpan = colSpan;
+        }
     }
 
     /**
@@ -111,8 +120,10 @@ export class Note {
      * @param {Number} rowSpan
      */
     set rowSpan(rowSpan) {
-        this._updateProp("rowSpan", rowSpan);
-        this.#rowSpan = rowSpan;
+        if (this.#rowSpan != rowSpan) {
+            this._updateProp("rowSpan", rowSpan);
+            this.#rowSpan = rowSpan;
+        }
     }
 
     /**
@@ -128,8 +139,10 @@ export class Note {
      * @param {String} color
      */
     set color(color) {
-        this._updateProp("color", color);
-        this.#color = color;
+        if (this.#color != color) {
+            this._updateProp("color", color);
+            this.#color = color;
+        }
     }
 
     /**
@@ -145,8 +158,10 @@ export class Note {
      * @param {String} content
      */
     set content(content) {
-        this._updateProp("content", content);
-        this.#content = content;
+        if (this.#content != content) {
+            this._updateProp("content", content);
+            this.#content = content;
+        }
     }
 
     /**
@@ -162,8 +177,10 @@ export class Note {
      * @param {Number} lastEdit
      */
     set lastEdit(lastEdit) {
-        this._updateProp("lastEdit", lastEdit);
-        this.#lastEdit = lastEdit;
+        if (this.#lastEdit != lastEdit) {
+            this._updateProp("lastEdit", lastEdit);
+            this.#lastEdit = lastEdit;
+        }
     }
 
     /**
@@ -179,8 +196,10 @@ export class Note {
      * @param {String} title
      */
     set title(title) {
-        this._updateProp("title", title);
-        this.#title = title;
+        if (this.#title != title) {
+            this._updateProp("title", title);
+            this.#title = title;
+        }
     }
 
     /**
@@ -196,8 +215,10 @@ export class Note {
      * @param {String} type
      */
     set type(type) {
-        this._updateProp("type", type);
-        this.#type = type;
+        if (this.#type != type) {
+            this._updateProp("type", type);
+            this.#type = type;
+        }
     }
 
     /**
@@ -213,8 +234,10 @@ export class Note {
      * @param {Boolean} displayTitle
      */
     set displayTitle(displayTitle) {
-        this._updateProp("displayTitle", displayTitle);
-        this.#displayTitle = displayTitle;
+        if (this.#displayTitle != displayTitle) {
+            this._updateProp("displayTitle", displayTitle);
+            this.#displayTitle = displayTitle;
+        }
     }
 
     /**
@@ -222,15 +245,22 @@ export class Note {
      * @param {String} prop - property/key to update
      * @param {any} value
      */
-    _updateProp(prop, value) {
-        console.log("updating", { prop: value });
-        vscode.postMessage({
-            type: "update",
-            id: this.#id,
-            prop: prop,
-            value: value,
-            path: ["notes", this.#id, prop],
-        });
+    async _updateProp(prop, value) {
+        //console.trace();
+        console.log("updating", { prop, value });
+        this.#updates[prop] = { path: ["notes", this.#id, prop], value: value };
+        this.#countUpdates++;
+        //'queue' updates
+        setTimeout(() => {
+            this.#countUpdates--;
+            if (this.#countUpdates == 0) {
+                vscode.postMessage({
+                    type: "update",
+                    data: Object.values(this.#updates),
+                });
+                this.#updates = {};
+            }
+        }, 500);
     }
 
     /**
@@ -239,7 +269,7 @@ export class Note {
      * @param {Object} newState - object with updated properties of note
      */
     updateState(newState) {
-        console.log("old", {
+        /*console.log("old", {
             row: this.row,
             col: this.col,
             rowSpan: this.rowSpan,
@@ -251,7 +281,7 @@ export class Note {
             type: this.type,
         });
 
-        console.log("new", newState);
+        console.log("new", newState);*/
 
         if (newState.row != this.#row) {
             this.#row = newState.row;
@@ -334,6 +364,8 @@ export class Page {
      * @param {Object} obj - object providing notes of page
      */
     constructor(obj) {
+        console.log("init_page");
+        console.log(obj);
         this.initNotes(obj);
     }
 
@@ -405,6 +437,7 @@ export class Page {
      * @param {Object} obj
      */
     initNotes(obj) {
+        console.log("notes init");
         for (let note in obj?.notes) {
             this._page[note] = new Note(obj.notes[note], note);
         }

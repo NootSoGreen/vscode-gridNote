@@ -63,7 +63,10 @@
 
                 //console.log(text);
                 // Update our webview's content
-                page.initNotes(updatedPage);
+                //page.initNotes(updatedPage);
+                if (updatedPage.settings.columns != page.settings.columns) {
+                    page.settings.columns = updatedPage.settings.columns;
+                }
 
                 // Then persist state information.
                 // This state is returned in the call to `vscode.getState` below when a webview is reloaded.
@@ -89,6 +92,7 @@
     // State lets us save information across these re-loads
     const st = vscode.getState();
     if (st) {
+        console.log(JSON.parse(st.text));
         page.initNotes(JSON.parse(st.text));
     }
 </script>

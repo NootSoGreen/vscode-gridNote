@@ -1,12 +1,17 @@
 {
-    "name": "grid-note-extension",
+    "name": "grid-note-vscode-extension",
+    "displayName": "Grid Note",
     "version": "0.0.1",
-    "description": "Note editor with grid layout for VS Code",
+    "description": "Note editor with grid layout extension for VS Code",
     "license": "GPL-3.0-or-later",
     "author": "MattWasHere",
     "publisher": "MattWasHere",
     "icon": "icons/gridNote-icon.png",
     "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/NootSoGreen/vscode-gridNote"
+    },
     "engines": {
         "vscode": "^1.74.0"
     },
@@ -17,6 +22,7 @@
         "note"
     ],
     "main": "./out/extension.js",
+    "activationEvents": [],
     "contributes": {
         "customEditors": [
             {
