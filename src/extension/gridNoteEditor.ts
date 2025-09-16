@@ -177,14 +177,14 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
             vscode.Uri.joinPath(
                 this.context.extensionUri,
                 "out",
-                "assets/index.js"
+                "compiled/bundle.js"
             )
         );
         const styleUri = webview.asWebviewUri(
             vscode.Uri.joinPath(
                 this.context.extensionUri,
                 "out",
-                "assets/index.css"
+                "compiled/bundle.css"
             )
         );
 

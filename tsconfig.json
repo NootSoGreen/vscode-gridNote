@@ -1,15 +1,16 @@
 {
     "compilerOptions": {
-        "module": "CommonJS",
+        "module": "esnext",
         "esModuleInterop": true,
         "target": "ESNext",
-        "lib": ["ESNext", "DOM"],
-        "outDir": "out",
+        "verbatimModuleSyntax": true,
         "sourceMap": true,
         "strict": true,
+        "skipLibCheck": true,
         "rootDir": "src",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "typeRoots": ["./node_modules/@types"]
     },
-    "exclude": ["node_modules", ".vscode-test"]
+    "include": ["src/**/*", "src/main.ts"],
+    "exclude": ["node_modules/*", "public/*", "src/extension/**"]
 }
