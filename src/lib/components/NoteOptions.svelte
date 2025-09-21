@@ -1,6 +1,9 @@
 <script>
-    let { moveNote, displayType, setDisplayType, lastEdit, page, id } =
-        $props();
+    let { moveNote, displayType, setDisplayType, note, page, id } = $props();
+
+    import Tex from "./TeX.svelte";
+
+    let displayTypes = $state(false);
 </script>
 
 <div class="note-options">
@@ -15,7 +18,8 @@
     <button
         title="settings"
         aria-label="note settings"
-        class="iconBtn {displayType == 'settings' ? 'selected' : ''}"
+        class="iconBtn"
+        class:selected={displayType == "settings"}
         onclick={() => setDisplayType("settings")}
     >
         <!--includes edit color, type, etc-->
@@ -34,11 +38,56 @@
     <button
         aria-label="edit note iconBtn"
         title="edit"
-        class="iconBtn {displayType == 'edit' ? 'selected' : ''}"
+        class="iconBtn"
+        class:selected={displayType == "edit"}
         onclick={() => setDisplayType("edit")}
     >
         <i class="codicon codicon-edit"></i>
     </button>
+    <span class="note-type-selector">
+        <button
+            title="Markdown"
+            aria-label="note type markdown"
+            class="iconBtn"
+            class:hidden={!displayTypes && note.type != "markdown"}
+            class:selected={note.type == "markdown" && displayTypes}
+            onclick={() => {
+                displayTypes = !displayTypes;
+                note.type = "markdown";
+                console.log({ displayTypes, type: note.type });
+            }}
+        >
+            <i class="codicon codicon-markdown"></i>
+        </button>
+        <button
+            title="TeX"
+            aria-label="note type TeX"
+            class="iconBtn"
+            class:hidden={!displayTypes && note.type != "tex"}
+            class:selected={note.type == "tex" && displayTypes}
+            onclick={() => {
+                displayTypes = !displayTypes;
+                note.type = "tex";
+                console.log({ displayTypes, type: note.type });
+            }}
+        >
+            <Tex></Tex>
+        </button>
+        <button
+            title="Image"
+            aria-label="note type image"
+            class="iconBtn"
+            class:hidden={!displayTypes && note.type != "image"}
+            class:selected={note.type == "image" && displayTypes}
+            onclick={() => {
+                displayTypes = !displayTypes;
+                note.type = "image";
+                console.log({ displayTypes, type: note.type });
+            }}
+        >
+            <i class="codicon codicon-file-media"></i>
+        </button>
+    </span>
 </div>
 
 <style>
@@ -55,5 +104,9 @@
 
     .note-options > button {
         margin-right: 0.25rem;
+    }
+
+    .note-type-selector {
+        display: flex;
     }
 </style>

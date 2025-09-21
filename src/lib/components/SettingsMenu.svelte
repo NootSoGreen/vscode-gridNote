@@ -17,6 +17,13 @@
                 bind:value={page.settings.columns}
             />
         </p>
+        <p>
+            <span>TeX Macros</span>
+            <textarea
+                bind:value={page.settings.texMacros}
+                class="textarea-input"
+            ></textarea>
+        </p>
     </div>
 </nav>
 
@@ -51,6 +58,18 @@
         border-radius: 2px;
         width: 100%;
         flex: 1;
+    }
+
+    .textarea-input {
+        color: var(--vscode-input-foreground);
+        background-color: var(--vscode-input-background);
+        outline-color: var(--vscode-focusBorder);
+        border: 0;
+        border-radius: 2px;
+        field-sizing: content;
+        resize: vertical;
+        width: 100%;
+        margin-right: 12px;
     }
 
     label {

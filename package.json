@@ -94,6 +94,7 @@
         "watch": "tsc -w -p ./",
         "dev": "vite",
         "build": "vite build",
+        "buildWatch": "vite build --watch",
         "preview": "vite preview",
         "format": "prettier --write .",
         "pkg": "vsce package"
@@ -113,6 +114,8 @@
         "@vscode/codicons": "0.0.20",
         "dompurify": "^3.2.3",
         "jsonc-parser": "^3.3.1",
-        "marked": "^15.0.5"
+        "katex": "^0.16.22",
+        "marked": "^15.0.5",
+        "marked-base-url": "^1.1.7"
     }
 }

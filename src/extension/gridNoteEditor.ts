@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { getNonce } from "./util";
 
 import { modify } from "jsonc-parser";
@@ -114,9 +115,14 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         const updateWebview = () => {
             let curDocState = document.getText();
             if (document.getText() != this.documentState) {
+                const documentPath = path.dirname(document.uri.fsPath);
                 webviewPanel.webview.postMessage({
                     type: "update",
                     text: curDocState,
+                    baseUri:
+                        "https://file%2B.vscode-resource.vscode-cdn.net" +
+                        vscode.Uri.file(documentPath).path +
+                        "/",
                 });
                 this.documentState = curDocState;
                 console.log("sent updated state");
@@ -155,7 +161,6 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
                     console.log("updating note...");
                     this.updateDocMulti(document, e.data);
                     return;
-
                 case "delete":
                     this.deleteNote(document, e.id);
                     return;
@@ -199,8 +204,20 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
             )
         );
 
+        const katexUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(
+                this.context.extensionUri,
+                "node_modules",
+                "katex",
+                "dist",
+                "katex.min.css"
+            )
+        );
+
         // Use a nonce to whitelist which scripts can be run
         const nonce = getNonce();
+
+        //unfortunately KaTex requires unsafe inline styling
 
         return /* html */ `
 			<!DOCTYPE html>
@@ -212,12 +229,13 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
 				Use a content security policy to only allow loading images from https or from our extension directory,
 				and only allow scripts that have a specific nonce.
 				-->
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource}; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'self' 'unsafe-inline' ${webview.cspSource}; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 				<link href="${styleUri}" rel="stylesheet" />
                 <link href="${codiconsUri}" rel="stylesheet" />
+                <link href="${katexUri}" rel="stylesheet" />
 
 				<title>Grid Note</title>
 			</head>
@@ -248,7 +266,6 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
             displayTitle: props.type ?? true,
         };
 
-        //TODO check if path will be created if it doesn't exist i.e. if notes key doesn't exist yet
         this.updateDoc(document, ["notes", id], toAdd);
     }
 

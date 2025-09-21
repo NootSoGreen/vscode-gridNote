@@ -1,9 +1,10 @@
 <script>
-    import { marked } from "marked";
+    import katex from "katex";
     import DOMPurify from "dompurify";
     import NoteOptions from "./NoteOptions.svelte";
+    import { notEqual } from "assert";
 
-    const options = ["markdown", "latex", "file-input"];
+    const options = ["markdown", "tex", "image"];
 
     let {
         sortIndex = 1,
@@ -14,6 +15,7 @@
         gridEle,
         updatePreview,
         displayPreview,
+        marked,
     } = $props();
 
     let displayOptions = $state(false);
@@ -112,6 +114,8 @@
     function setDisplayType(input) {
         displayType = displayType == input ? "" : input;
     }
+
+    let initState = null;
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -162,12 +166,12 @@
                         : ''}"
                 ></span>
             </div>
-            <div class="note-options {displayOptions ? '' : 'hidden'}">
+            <div class="note-options" class:hidden={!displayOptions}>
                 <NoteOptions
                     {moveNote}
                     {displayType}
                     {setDisplayType}
-                    lastEdit={note.lastEdit}
+                    {note}
                     {page}
                     {id}
                 ></NoteOptions>
@@ -175,19 +179,50 @@
         </div>
     {/if}
     <div
-        class="note-content {displayType == 'settings'
-            ? 'margin-right'
-            : ''}{displayType == 'edit' ? 'edit' : ''}"
+        class="note-content"
+        class:margin-right={displayType == "settings" ||
+            (displayType == "edit" && note.type == "image")}
+        class:edit={displayType == "edit"}
+        class:full-height={!note.displayTitle}
+        class:center-content={note.type == "image" && displayType == ""}
     >
         {#if displayType == "edit"}
-            <textarea
-                style={note.displayTitle ? "" : "padding-top: 2.1rem;"}
-                class="textbox"
-                bind:value={note.content}
-                onchange={() => (note.lastEdit = Date.now())}
-            >
-                {DOMPurify.sanitize(note.content)}
-            </textarea>
+            {#if note.type == "image"}
+                <input
+                    class="input-field file-path full-width"
+                    title="image filepath"
+                    placeholder="images/image.png"
+                    bind:value={note.content}
+                />
+                <p>
+                    <label for="imageSizing">Columns</label>
+                    <select
+                        name="imageSizing"
+                        bind:value={note.imageSizing}
+                        class="input-field"
+                    >
+                        <option value="contain">Contain</option><option
+                            value="center">Center</option
+                        >
+                    </select>
+                </p>
+
+                <!--<div class="drop-zone" ondragover={() => {}}></div>-->
+            {:else}
+                <textarea
+                    class="textbox"
+                    bind:value={note.content}
+                    onfocus={() => {
+                        initState = note.content;
+                    }}
+                    onfocusout={() => {
+                        if (note.content != initState) {
+                            note.lastEdit = Date.now();
+                        }
+                    }}
+                >
+                </textarea>
+            {/if}
         {:else if displayType == "settings"}
             {#if !note.displayTitle}
                 <div style="height: 2.1rem;"></div>
@@ -196,9 +231,8 @@
                 {#each colors as selColor}
                     <button
                         aria-label="note color {note.color}"
-                        class="btn-color {selColor == note.color
-                            ? 'selected'
-                            : ''}"
+                        class="btn-color"
+                        class:selected={selColor == note.color}
                         style="background-color: var(--vscode-terminal-ansi{selColor})"
                         onclick={() => (note.color = selColor)}
                     ></button>
@@ -227,6 +261,21 @@
                     bind:checked={note.displayTitle}
                 />
             </div>
+        {:else if note.type == "tex"}
+            {#await katex.renderToString( note.content, { throwOnError: false, displayMode: true, macros: page.settings.texMacros ? JSON.parse(page.settings.texMacros) : undefined } ) then cont}
+                {@html DOMPurify.sanitize(cont)}
+            {/await}
+        {:else if note.type == "image"}
+            {#if !note.content.length}
+                <span>No image defined</span>
+            {:else}
+                <img
+                    class="image"
+                    class:contain-image={note.imageSizing == "contain"}
+                    src={page.settings.baseUri + note.content}
+                    alt="provided"
+                />
+            {/if}
         {:else}
             {#await marked.parse(note.content) then cont}
                 {@html DOMPurify.sanitize(cont)}
@@ -234,7 +283,11 @@
         {/if}
     </div>
     <!--local string likely to break, it's likely a good idea to use a derived rune here-->
-    <span class="note-date">{lastEditEnum}</span>
+    <span
+        class="note-date"
+        class:edit={displayType == "edit" || displayType == "settings"}
+        >{lastEditEnum}</span
+    >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         aria-label="resize note"
@@ -243,14 +296,15 @@
     ></div>
     {#if !note.displayTitle}
         <div
-            class="note-options {displayOptions ? '' : 'hidden'}"
+            class="note-options"
+            class:hidden={!displayOptions}
             style="background-color: var(--vscode-terminal-ansi{note.color});"
         >
             <NoteOptions
                 {moveNote}
                 {displayType}
                 {setDisplayType}
-                lastEdit={note.lastEdit}
+                {note}
                 {page}
                 {id}
             ></NoteOptions>
@@ -320,12 +374,16 @@
     .note-content {
         padding-left: 0.5rem;
         width: calc(100% - 0.5rem);
-        height: calc(100% - 2.1rem);
+        height: calc(100% - 3.6rem);
         overflow-y: auto;
     }
 
     .note-content.edit {
         background-color: var(--vscode-notebook-cellEditorBackground);
+    }
+
+    .note-content.full-height {
+        height: calc(100% - 1.5rem);
     }
 
     .note-content.margin-right {
@@ -338,6 +396,10 @@
         padding: 0;
         display: block;
         padding-right: 0.5rem;
+    }
+
+    .note-content.full-height > textarea {
+        padding-top: 2.1rem;
     }
 
     :root {
@@ -390,7 +452,12 @@
         font-size: 0.75rem;
         bottom: 0;
         padding: 0.25rem;
-        width: calc(100% - 1.6rem);
+        width: 100%;
+        padding-right: 2rem;
+    }
+
+    .note-date.edit {
+        background-color: var(--vscode-notebook-cellEditorBackground);
     }
 
     .resize-grab {
@@ -429,4 +496,47 @@
         transform: translateX(0) !important;
         transition: none !important;
     }*/
+
+    /*.drop-zone {
+        color: var(--vscode-input-foreground);
+        background-color: var(--vscode-input-background);
+        outline-color: var(--vscode-focusBorder);
+    }*/
+
+    .image {
+        padding-top: 1.5rem;
+        box-sizing: border-box;
+        object-fit: none;
+    }
+
+    .contain-image {
+        width: calc(100% - 3px);
+        height: calc(100% - 3px);
+        object-fit: contain;
+    }
+
+    .input-field {
+        color: var(--vscode-input-foreground);
+        background-color: var(--vscode-input-background);
+        outline-color: var(--vscode-focusBorder);
+        height: 24px;
+        padding: 3px 6px 3px 6px;
+        box-sizing: border-box;
+        border: 0;
+        border-radius: 2px;
+        flex: 1;
+    }
+
+    .full-width {
+        width: 100%;
+    }
+
+    .file-path {
+        margin-top: 0.5rem;
+    }
+
+    .center-content {
+        display: flex;
+        align-content: center;
+    }
 </style>

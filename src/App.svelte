@@ -8,6 +8,10 @@
     import { sharedState } from "./lib/shared.svelte";
     import SettingsMenu from "./lib/components/SettingsMenu.svelte";
 
+    //import marked here to set base-url
+    import { marked } from "marked";
+    import { baseUrl } from "marked-base-url";
+
     const vscode = acquireVsCodeApi();
 
     //create notebook
@@ -62,11 +66,18 @@
                 }
 
                 //console.log(text);
-                // Update our webview's content
+                // Update webview's content
                 //page.initNotes(updatedPage);
-                if (updatedPage.settings.columns != page.settings.columns) {
-                    page.settings.columns = updatedPage.settings.columns;
+                if (updatedPage.settings) {
+                    page.settings.updateState(updatedPage.settings);
                 }
+
+                if (page.settings.baseUri != message.baseUri) {
+                    page.settings.baseUri = message.baseUri;
+                    marked.use(baseUrl(page.settings.baseUri));
+                }
+
+                console.log(page.settings.baseUri);
 
                 // Then persist state information.
                 // This state is returned in the call to `vscode.getState` below when a webview is reloaded.
@@ -85,6 +96,11 @@
                 console.log(JSON.parse(text));
                 sortIndex = JSON.parse(text);
                 break;
+            case "image":
+                let imagePath = JSON.parse(text);
+                page.notes[imagePath.note].updateState({
+                    filePath: imagePath.filePath,
+                });
         }
     });
 
@@ -101,7 +117,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <main class="full">
     <div class="content">
-        <Grid {page} {sortIndex}></Grid>
+        <Grid {page} {sortIndex} {marked}></Grid>
         <SettingsMenu {page} {showSettings}></SettingsMenu>
     </div>
 </main>

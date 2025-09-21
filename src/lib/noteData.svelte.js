@@ -15,11 +15,14 @@ export class Note {
     #color = $state("Yellow");
     #content = $state("");
     #lastEdit = $state(Date.now());
+    #created = $state(null);
     #title = $state("");
     #type = $state("markdown");
     #displayTitle = $state(true);
     #countUpdates = 0;
     #updates = {};
+    #dueDate = $state(null);
+    #imageSizing;
 
     /**
      * Create note
@@ -27,9 +30,8 @@ export class Note {
      * @param {String} id
      */
     constructor(obj, id) {
-        //console.trace();
-        console.log(obj);
         this.#id = id;
+        this.#type = obj.type ?? "markdown";
         this.#col = obj.col ?? 1;
         this.#row = obj.row ?? 1;
         this.#colSpan = obj.colSpan ?? 1;
@@ -37,9 +39,13 @@ export class Note {
         this.#color = obj.color ?? "Yellow";
         this.#content = obj.content ?? "";
         this.#lastEdit = obj.lastEdit ?? Date.now();
+        this.#created = obj.created ?? Date.now();
         this.#title = obj.title ?? "";
-        this.#type = obj.type ?? "markdown";
-        this.#displayTitle = obj.type ?? true;
+        this.#displayTitle = obj.displayTitle ?? true;
+        this.#imageSizing = obj.imageSizing ?? "contain";
+        if (obj.dueDate) {
+            this.#dueDate = new Date(obj.dueDate);
+        }
     }
 
     /**
@@ -184,6 +190,14 @@ export class Note {
     }
 
     /**
+     * Timestamp of last edit
+     * @type {Date}
+     */
+    get created() {
+        return this.#created;
+    }
+
+    /**
      * Get title of note
      * @type {String}
      */
@@ -211,10 +225,11 @@ export class Note {
     }
 
     /**
-     * Set type of note
+     * Set type of note, current expected types are markdown, tex, image
      * @param {String} type
      */
     set type(type) {
+        console.log("set type to " + type);
         if (this.#type != type) {
             this._updateProp("type", type);
             this.#type = type;
@@ -241,12 +256,49 @@ export class Note {
     }
 
     /**
+     * Returns due date of note
+     * @type {Date}
+     */
+    get dueDate() {
+        return this.#dueDate;
+    }
+
+    /**
+     * Sets due date
+     * @param {Date} dueDate
+     */
+    set dueDate(dueDate) {
+        if (this.#dueDate != dueDate) {
+            this._updateProp("dueDate", dueDate);
+            this.#dueDate = dueDate;
+        }
+    }
+
+    /**
+     * Returns image sizing
+     * @type {String}
+     */
+    get imageSizing() {
+        return this.#imageSizing;
+    }
+
+    /**
+     * Sets image sizing
+     * @param {String} imageSizing
+     */
+    set imageSizing(imageSizing) {
+        if (this.#imageSizing != imageSizing) {
+            this._updateProp("imageSizing", imageSizing);
+            this.#imageSizing = imageSizing;
+        }
+    }
+
+    /**
      * Send message to update property
      * @param {String} prop - property/key to update
      * @param {any} value
      */
     async _updateProp(prop, value) {
-        //console.trace();
         console.log("updating", { prop, value });
         this.#updates[prop] = { path: ["notes", this.#id, prop], value: value };
         this.#countUpdates++;
@@ -269,53 +321,39 @@ export class Note {
      * @param {Object} newState - object with updated properties of note
      */
     updateState(newState) {
-        /*console.log("old", {
-            row: this.row,
-            col: this.col,
-            rowSpan: this.rowSpan,
-            colSpan: this.colSpan,
-            color: this.color,
-            content: this.content,
-            lastEdit: this.lastEdit,
-            title: this.title,
-            type: this.type,
-        });
-
-        console.log("new", newState);*/
-
-        if (newState.row != this.#row) {
+        if (this.#row != newState.row) {
             this.#row = newState.row;
         }
 
-        if (newState.col != this.#col) {
+        if (this.#col != newState.col) {
             this.#col = newState.col;
         }
 
-        if (newState.rowSpan != this.#rowSpan) {
+        if (this.#rowSpan != newState.rowSpan) {
             this.#rowSpan = newState.rowSpan;
         }
 
-        if (newState.colSpan != this.#colSpan) {
+        if (this.#colSpan != newState.colSpan) {
             this.#colSpan = newState.colSpan;
         }
 
-        if (newState.color != this.#color) {
+        if (this.#color != newState.color) {
             this.#color = newState.color;
         }
 
-        if (newState.content != this.#content) {
+        if (this.#content != newState.content) {
             this.#content = newState.content;
         }
 
-        if (newState.lastEdit != this.#lastEdit) {
+        if (this.#lastEdit != newState.lastEdit) {
             this.#lastEdit = newState.lastEdit;
         }
 
-        if (newState.title != this.#title) {
+        if (this.#title != newState.title) {
             this.#title = newState.title;
         }
 
-        if (newState.type != this.#type) {
+        if (this.#type != newState.type) {
             this.#type = newState.type;
         }
     }
@@ -326,6 +364,10 @@ export class Note {
  */
 export class PageSettings {
     #columns = $state(6);
+    #texMacros = $state("");
+    #baseUri = $state("");
+    #updates = {};
+    #countUpdates = 0;
 
     /**
      * Init page settings
@@ -333,10 +375,11 @@ export class PageSettings {
      */
     constructor(obj) {
         this.#columns = obj?.columns ?? 6;
+        this.#texMacros = obj?.texMacros ?? "";
     }
 
     /**
-     * Set no. columns of page
+     * Get no. columns of page
      * @type {Number}
      */
     get columns() {
@@ -344,11 +387,93 @@ export class PageSettings {
     }
 
     /**
-     * Get no. columns of page
+     * Set no. columns of page
      * @param {Number} cols
      */
     set columns(cols) {
-        this.#columns = cols;
+        if (this.#columns != cols) {
+            this._updateProp("columns", cols);
+            this.#columns = cols;
+        }
+    }
+
+    /**
+     * Returns texMacros as a string
+     * @type {String}
+     */
+    get texMacros() {
+        return this.#texMacros;
+    }
+
+    /**
+     * Sets texMacros
+     * @param {String} texMacros
+     */
+    set texMacros(texMacros) {
+        console.log({
+            new: texMacros,
+            old: this.#texMacros,
+            same: this.#texMacros == texMacros,
+        });
+
+        if (this.#texMacros != texMacros) {
+            this._updateProp("texMacros", texMacros);
+            this.#texMacros = texMacros;
+        }
+    }
+
+    /**
+     * Returns baseUri to use with images
+     * @type {String}
+     */
+    get baseUri() {
+        return this.#baseUri;
+    }
+
+    /**
+     * Sets baseUri, no need to store this
+     * @param {String} baseUri
+     */
+    set baseUri(baseUri) {
+        this.#baseUri = baseUri;
+    }
+
+    //consider moving this function to Page, then you could pass the function to the constructor of PageSettings and Note
+    /**
+     * Send message to update property
+     * @param {String} prop - property/key to update
+     * @param {any} value
+     */
+    async _updateProp(prop, value) {
+        console.log("updating", { prop, value });
+        this.#updates[prop] = { path: ["settings", prop], value: value };
+        this.#countUpdates++;
+        //'queue' updates
+        setTimeout(() => {
+            this.#countUpdates--;
+            if (this.#countUpdates == 0) {
+                vscode.postMessage({
+                    type: "update",
+                    data: Object.values(this.#updates),
+                });
+                this.#updates = {};
+            }
+        }, 500);
+    }
+
+    /**
+     * Updates note - there must be a better way to do this :/
+     * Can't just use setter as setter triggers update message, which we would want to avoid here
+     * @param {Object} newState - object with updated properties of note
+     */
+    updateState(newState) {
+        if (this.#columns != (newState.columns ?? 6)) {
+            this.#columns = newState.columns;
+        }
+
+        if (this.#texMacros != (newState.texMacros ?? "")) {
+            this.#texMacros = newState.texMacros;
+        }
     }
 }
 
@@ -359,14 +484,9 @@ export class Page {
     _page = $state({});
     #settings = $state();
 
-    /**
-     * Init page
-     * @param {Object} obj - object providing notes of page
-     */
-    constructor(obj) {
+    constructor() {
         console.log("init_page");
-        console.log(obj);
-        this.initNotes(obj);
+        this.#settings = new PageSettings();
     }
 
     /**
@@ -429,20 +549,6 @@ export class Page {
      */
     deleteNote(id) {
         delete this._page[id];
-    }
-
-    /**
-     * Initialises note
-     *
-     * @param {Object} obj
-     */
-    initNotes(obj) {
-        console.log("notes init");
-        for (let note in obj?.notes) {
-            this._page[note] = new Note(obj.notes[note], note);
-        }
-
-        this.#settings = new PageSettings(obj?.settings);
     }
 
     /**

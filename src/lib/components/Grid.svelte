@@ -1,7 +1,7 @@
 <script>
     import Note from "./Note.svelte";
 
-    let { page, sortIndex } = $props();
+    let { page, sortIndex, marked } = $props();
 
     let gridWidth = $state();
 
@@ -354,6 +354,7 @@
                 {gridEle}
                 {updatePreview}
                 {displayPreview}
+                {marked}
             ></Note>
         {/each}
         <!--Note at end of grid-->
@@ -407,8 +408,6 @@
     }
 
     .grid-padding {
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
         width: 100%;
         overflow-y: scroll;
         /*scrollbar-width: none;*/
