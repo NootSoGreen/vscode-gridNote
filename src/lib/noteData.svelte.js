@@ -484,9 +484,13 @@ export class Page {
     _page = $state({});
     #settings = $state();
 
-    constructor() {
+    /**
+     * Init page - object can be passed when
+     * @param {Object} obj - object providing notes of page
+     */
+    constructor(obj) {
         console.log("init_page");
-        this.#settings = new PageSettings();
+        this.initNotes(obj);
     }
 
     /**
@@ -549,6 +553,20 @@ export class Page {
      */
     deleteNote(id) {
         delete this._page[id];
+    }
+
+    /**
+     * Initialises note
+     *
+     * @param {Object} obj
+     */
+    initNotes(obj) {
+        console.log("notes init");
+        for (let note in obj?.notes) {
+            this._page[note] = new Note(obj.notes[note], note);
+        }
+
+        this.#settings = new PageSettings(obj?.settings);
     }
 
     /**
