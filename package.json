@@ -1,7 +1,7 @@
 {
     "name": "grid-note-vscode-extension",
     "displayName": "Grid Note",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Note editor with grid layout extension for VS Code",
     "license": "GPL-3.0-or-later",
     "author": "MattWasHere",
@@ -98,7 +98,7 @@
         "preview": "vite preview",
         "format": "prettier --write .",
         "pkg": "vsce package",
-        "publish":"vsce publish"
+        "publish": "vsce publish"
     },
     "devDependencies": {
         "@sveltejs/vite-plugin-svelte": "^5.0.3",
