@@ -1,10 +1,9 @@
 <script>
     import katex from "katex";
     import DOMPurify from "dompurify";
-    import NoteOptions from "./NoteOptions.svelte";
-    import { notEqual } from "assert";
-
-    const options = ["markdown", "tex", "image"];
+    import { untrack } from "svelte";
+    import NoteButtons from "./NoteButtons.svelte";
+    import NoteSettings from "./NoteSettings.svelte";
 
     let {
         sortIndex = 1,
@@ -16,34 +15,24 @@
         updatePreview,
         displayPreview,
         marked,
+        cellPosition,
     } = $props();
 
     let displayOptions = $state(false);
     let displayType = $state("");
-    //DD/MM/YYYY HH:mm
-    let lastEditEnum = $derived.by(() => {
-        let lastEditDt = new Date(note.lastEdit);
-        return `${lastEditDt.getDate()}/${lastEditDt.getMonth() + 1}/${lastEditDt.getFullYear()} ${lastEditDt.getHours().toString()}:${lastEditDt.getMinutes().toString().padStart(2, "0")}`;
-    });
 
-    let colors = ["Red", "Green", "Yellow", "Blue", "Magenta", "Cyan"];
+    /**
+     * Returns timestamp in format DD/MM/YYYY HH:mm
+     * @param {Number|Date}date
+     */
+    function timestamp(date) {
+        let dt = new Date(date);
+        return `${dt.getDate()}/${dt.getMonth() + 1}/${dt.getFullYear()} ${dt.getHours().toString()}:${dt.getMinutes().toString().padStart(2, "0")}`;
+    }
 
-    /*--vscode-terminal-ansiBlack: #073642;
-    --vscode-terminal-ansiRed: #dc322f;
-    --vscode-terminal-ansiGreen: #859900;
-    --vscode-terminal-ansiYellow: #b58900;
-    --vscode-terminal-ansiBlue: #268bd2;
-    --vscode-terminal-ansiMagenta: #d33682;
-    --vscode-terminal-ansiCyan: #2aa198;
-    --vscode-terminal-ansiWhite: #eee8d5;
-    --vscode-terminal-ansiBrightBlack: #002b36;
-    --vscode-terminal-ansiBrightRed: #cb4b16;
-    --vscode-terminal-ansiBrightGreen: #586e75;
-    --vscode-terminal-ansiBrightYellow: #657b83;
-    --vscode-terminal-ansiBrightBlue: #839496;
-    --vscode-terminal-ansiBrightMagenta: #6c71c4;
-    --vscode-terminal-ansiBrightCyan: #93a1a1;
-    --vscode-terminal-ansiBrightWhite: #fdf6e3;*/
+    let lastEditEnum = $derived(timestamp(note.lastEdit));
+
+    let createdEnum = $derived(timestamp(note.created));
 
     function resizeNote(event) {
         event.preventDefault();
@@ -62,13 +51,7 @@
         window.removeEventListener("mouseup", stopResizeNote);
         displayPreview = false;
 
-        let elementPos = gridEle.getBoundingClientRect();
-        let x = event.clientX - elementPos.left;
-        let y = event.clientY - elementPos.top + gridEle.scrollTop;
-
-        let colWidth = elementPos.width / page.settings.columns;
-        let mouseCol = Math.floor(x / colWidth) + 1;
-        let mouseRow = Math.floor(y / colWidth + 1);
+        let [mouseCol, mouseRow] = cellPosition(event.clientX, event.clientY, false, gridEle.scrollTop);
 
         note.colSpan = Math.max(mouseCol - note.col, 0) + 1;
         note.rowSpan = Math.max(mouseRow - note.row, 0) + 1;
@@ -77,13 +60,8 @@
     }
 
     function resizeNoteOnMouseMove(event) {
-        let elementPos = gridEle.getBoundingClientRect();
-        let x = event.clientX - elementPos.left;
-        let y = event.clientY - elementPos.top + gridEle.scrollTop;
+        let [mouseCol, mouseRow] = cellPosition(event.clientX, event.clientY, false, gridEle.scrollTop);
 
-        let colWidth = elementPos.width / page.settings.columns;
-        let mouseCol = Math.floor(x / colWidth) + 1;
-        let mouseRow = Math.floor(y / colWidth + 1);
         updatePreview(
             note.col,
             note.row,
@@ -116,6 +94,105 @@
     }
 
     let initState = null;
+
+    /**
+     * Returns relative date string
+     * @param {Date} date
+     * @returns {string}
+     */
+    function relativeDate(date) {
+        let curDate = new Date();
+        let dt = new Date(date);
+        let dtms = dt.getTime();
+        let seconds = Math.round((curDate.getTime() - dt.getTime()) / 1000);
+
+        if (seconds == 0) {
+            return [1000, false, "Now"];
+        }
+
+        let prefix = "in ";
+        let suffix = " ago";
+
+        let offSet = 1000;
+        let overDue = false;
+        let text = "";
+
+        if (seconds < 0) {
+            seconds = seconds * -1;
+            //provided date is before now
+            suffix = "";
+        } else {
+            //provided date is after now
+            prefix = "";
+            overDue = true;
+        }
+
+        if (seconds < 60) {
+            //seconds (1s->60s)
+            offSet = 1000 - (dtms % 1000);
+            text = seconds + "s";
+        } else if (seconds < 60 * 5) {
+            //minutes + seconds (1m->5m)
+            offSet = 1000 - (dtms % 1000);
+            text = Math.floor(seconds / 60) + "m " + (seconds % 60) + "s";
+        } else if (seconds < 60 * 60) {
+            //minutes (5m->60m)
+            offSet = 1000 * 60 - (dtms % 1000) * 60;
+            text = Math.floor(seconds / 60) + "m";
+        } else if (seconds < 60 * 60 * 24) {
+            //hours + minutes(1h->24h)
+            offSet = 1000 * 60 - (dtms % 1000) * 60;
+            text = Math.floor(seconds / (60 * 60)) + "h " + (Math.floor(seconds / 60) % 60) + "m";
+        } else if (seconds < 60 * 60 * 24 * 7) {
+            //days + hours (1d->7d)
+            offSet = 1000 * 60 * 60 - (dtms % 1000) * 60 * 60;
+            text = Math.floor(seconds / (60 * 60 * 24)) + "d " + (Math.floor(seconds / (60 * 60)) % 24) + "h";
+        } else if (seconds < 60 * 60 * 24 * 365) {
+            //days (7d->365d)
+            offSet = 1000 * 60 * 60 * 24 - (dtms % 1000) * 60 * 60 * 24;
+            text = Math.floor(seconds / (60 * 60 * 24)) + "d";
+        } else {
+            //years + days - ignores leap years
+            offSet = 1000 * 60 * 60 * 24 - (dtms % 1000) * 60 * 60 * 24;
+            text =
+                Math.floor(seconds / (60 * 60 * 24 * 365)) + "y " + (Math.floor(seconds / (60 * 60 * 24)) % 365) + "d";
+        }
+
+        return [offSet, overDue, prefix + text + suffix];
+    }
+
+    let interval = $state();
+    let offset = $state();
+    let dueDateRelative = $state("");
+    let overdue = $state(false);
+
+    $effect(() => {
+        if (note.dueDate) {
+            [offset, overdue, dueDateRelative] = relativeDate(note.dueDate);
+            untrack(() => {
+                clearInterval(interval);
+                updateInterval();
+            });
+        }
+    });
+
+    function updateInterval() {
+        clearInterval(interval);
+        interval = setInterval(() => {
+            if (!note.dueDate) {
+                clearInterval(interval);
+                return;
+            }
+
+            let newOffset;
+            [newOffset, overdue, dueDateRelative] = relativeDate(note.dueDate);
+            if (offset != newOffset) {
+                clearInterval(interval);
+                offset = newOffset;
+                updateInterval();
+            }
+        }, offset);
+    }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -128,13 +205,9 @@
     class="note"
     style="border: 1px solid var(--vscode-terminal-ansi{note.color}); grid-column:{!sortIndex
         ? 'auto'
-        : note.col} / {!sortIndex
-        ? 'span ' + note.colSpan
-        : note.col + note.colSpan}; grid-row: {!sortIndex
+        : note.col} / {!sortIndex ? 'span ' + note.colSpan : note.col + note.colSpan}; grid-row: {!sortIndex
         ? 'auto'
-        : note.row} / {!sortIndex
-        ? 'span ' + note.rowSpan
-        : note.row + note.rowSpan};"
+        : note.row} / {!sortIndex ? 'span ' + note.rowSpan : note.row + note.rowSpan};"
     onmouseover={() => (displayOptions = true)}
     onfocus={() => (displayOptions = true)}
     onmouseout={() => (displayOptions = false)}
@@ -166,22 +239,14 @@
                         : ''}"
                 ></span>
             </div>
-            <div class="note-options" class:hidden={!displayOptions}>
-                <NoteOptions
-                    {moveNote}
-                    {displayType}
-                    {setDisplayType}
-                    {note}
-                    {page}
-                    {id}
-                ></NoteOptions>
+            <div class="note-buttons" class:hidden={!displayOptions}>
+                <NoteButtons {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteButtons>
             </div>
         </div>
     {/if}
     <div
         class="note-content"
-        class:margin-right={displayType == "settings" ||
-            (displayType == "edit" && note.type == "image")}
+        class:margin-right={displayType == "settings" || (displayType == "edit" && note.type == "image")}
         class:edit={displayType == "edit"}
         class:full-height={!note.displayTitle}
         class:center-content={note.type == "image" && displayType == ""}
@@ -196,14 +261,8 @@
                 />
                 <p>
                     <label for="imageSizing">Columns</label>
-                    <select
-                        name="imageSizing"
-                        bind:value={note.imageSizing}
-                        class="input-field"
-                    >
-                        <option value="contain">Contain</option><option
-                            value="center">Center</option
-                        >
+                    <select name="imageSizing" bind:value={note.imageSizing} class="input-field">
+                        <option value="contain">Contain</option><option value="center">Center</option>
                     </select>
                 </p>
 
@@ -212,6 +271,7 @@
                 <textarea
                     class="textbox"
                     bind:value={note.content}
+                    spellcheck="true"
                     onfocus={() => {
                         initState = note.content;
                     }}
@@ -224,43 +284,7 @@
                 </textarea>
             {/if}
         {:else if displayType == "settings"}
-            {#if !note.displayTitle}
-                <div style="height: 2.1rem;"></div>
-            {/if}
-            <div class="note-colors">
-                {#each colors as selColor}
-                    <button
-                        aria-label="note color {note.color}"
-                        class="btn-color"
-                        class:selected={selColor == note.color}
-                        style="background-color: var(--vscode-terminal-ansi{selColor})"
-                        onclick={() => (note.color = selColor)}
-                    ></button>
-                {/each}
-            </div>
-            <div class="note-settings-input">
-                <label for="noteWidth">Width</label><input
-                    name="noteWidth"
-                    type="number"
-                    bind:value={note.colSpan}
-                />
-            </div>
-            <div class="note-settings-input">
-                <label for="noteHeight">Height</label><input
-                    name="noteHeight"
-                    type="number"
-                    bind:value={note.rowSpan}
-                />
-            </div>
-            <div style="margin-bottom: 10px;">
-                <label for="displayTitle"> Display Title Bar</label>
-                <input
-                    type="checkbox"
-                    id="displayTitle"
-                    name="displayTitle"
-                    bind:checked={note.displayTitle}
-                />
-            </div>
+            <NoteSettings {note}></NoteSettings>
         {:else if note.type == "tex"}
             {#await katex.renderToString( note.content, { throwOnError: false, displayMode: true, macros: page.settings.texMacros ? JSON.parse(page.settings.texMacros) : undefined } ) then cont}
                 {@html DOMPurify.sanitize(cont)}
@@ -285,31 +309,28 @@
     <!--local string likely to break, it's likely a good idea to use a derived rune here-->
     <span
         class="note-date"
+        title={"Created: " + createdEnum}
         class:edit={displayType == "edit" || displayType == "settings"}
-        >{lastEditEnum}</span
-    >
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        aria-label="resize note"
-        class="resize-grab"
-        onmousedown={(event) => resizeNote(event)}
-    ></div>
-    {#if !note.displayTitle}
-        <div
-            class="note-options"
-            class:hidden={!displayOptions}
-            style="background-color: var(--vscode-terminal-ansi{note.color});"
+        >{note.dueDate ? lastEditEnum + " | " : lastEditEnum}<span class:red={overdue}
+            >{note.dueDate ? "Due " + dueDateRelative : ""}</span
         >
-            <NoteOptions
-                {moveNote}
-                {displayType}
-                {setDisplayType}
-                {note}
-                {page}
-                {id}
-            ></NoteOptions>
-        </div>
-    {/if}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+            aria-label="resize note"
+            class="resize-grab"
+            class:hidden={!displayOptions}
+            onmousedown={(event) => resizeNote(event)}
+        ></div>
+        {#if !note.displayTitle}
+            <div
+                class="note-buttons"
+                class:hidden={!displayOptions}
+                style="background-color: var(--vscode-terminal-ansi{note.color});"
+            >
+                <NoteOptions {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteOptions>
+            </div>
+        {/if}
+    </span>
 </div>
 
 <style>
@@ -326,49 +347,6 @@
         background-color: transparent;
         resize: none;
         color: var(--vscode-editor-foreground);
-    }
-
-    .note-colors {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        margin-top: 0.5rem;
-        background-color: var(--vscode-input-background);
-        margin-bottom: 10px;
-    }
-
-    .btn-color {
-        border: 2px solid white;
-    }
-
-    .btn-color.selected {
-        border: 2px solid black;
-    }
-
-    .note-settings-input {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-
-    .note-settings-input > input {
-        color: var(--vscode-input-foreground);
-        background-color: var(--vscode-input-background);
-        outline-color: var(--vscode-focusBorder);
-        height: 24px;
-        padding: 3px 6px 3px 6px;
-        box-sizing: border-box;
-        border: 0;
-        border-radius: 2px;
-        width: 100%;
-        flex: 1;
-    }
-
-    .note-settings-input > label {
-        padding-right: 6px;
     }
 
     .note-content {
@@ -410,10 +388,6 @@
         --note-grey: #8c8784;
     }
 
-    button {
-        padding: 0.25rem;
-    }
-
     .note {
         overflow: hidden;
         min-width: 0;
@@ -452,8 +426,7 @@
         font-size: 0.75rem;
         bottom: 0;
         padding: 0.25rem;
-        width: 100%;
-        padding-right: 2rem;
+        width: calc(100% - 0.5rem);
     }
 
     .note-date.edit {
@@ -538,5 +511,9 @@
     .center-content {
         display: flex;
         align-content: center;
+    }
+
+    .red {
+        color: var(--vscode-terminal-ansiRed);
     }
 </style>

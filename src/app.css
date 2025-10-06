@@ -18,6 +18,10 @@ body {
     padding: 0;
 }
 
+body.vscode-dark {
+    color-scheme: dark;
+}
+
 .hidden {
     display: none !important;
 }

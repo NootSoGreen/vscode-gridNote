@@ -1,6 +1,4 @@
 <script>
-    import { sharedState } from "../shared.svelte";
-
     let { page, showSettings } = $props();
 </script>
 
@@ -11,18 +9,11 @@
     <div class="content">
         <p class="input-row">
             <label for="columns">Columns</label>
-            <input
-                name="columns"
-                type="number"
-                bind:value={page.settings.columns}
-            />
+            <input name="columns" type="number" bind:value={page.settings.columns} />
         </p>
         <p>
             <span>TeX Macros</span>
-            <textarea
-                bind:value={page.settings.texMacros}
-                class="textarea-input"
-            ></textarea>
+            <textarea bind:value={page.settings.texMacros} class="textarea-input"></textarea>
         </p>
     </div>
 </nav>

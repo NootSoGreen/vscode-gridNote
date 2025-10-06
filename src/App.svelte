@@ -5,7 +5,6 @@
     import Grid from "./lib/components/Grid.svelte";
     import { getPageState, setPageState } from "./lib/noteData.svelte";
 
-    import { sharedState } from "./lib/shared.svelte";
     import SettingsMenu from "./lib/components/SettingsMenu.svelte";
 
     //import marked here to set base-url
@@ -19,11 +18,6 @@
     const page = getPageState();
 
     let showSettings = $state(false);
-
-    let sortTypes = [
-        { label: "gravity", icon: "fold-up" },
-        { label: "position", icon: "move" },
-    ];
 
     let sortIndex = $state(1);
 
@@ -65,7 +59,6 @@
                     page.deleteNote(note);
                 }
 
-                //console.log(text);
                 // Update webview's content
                 //page.initNotes(updatedPage);
                 if (updatedPage.settings) {
@@ -77,11 +70,9 @@
                     marked.use(baseUrl(page.settings.baseUri));
                 }
 
-                console.log(page.settings.baseUri);
-
                 // Then persist state information.
                 // This state is returned in the call to `vscode.getState` below when a webview is reloaded.
-                vscode.setState({ text });
+                vscode.setState({ text, baseUri: message.baseUri });
 
                 break;
             case "delete":
@@ -93,7 +84,6 @@
                 showSettings = !showSettings;
                 break;
             case "setSort":
-                console.log(JSON.parse(text));
                 sortIndex = JSON.parse(text);
                 break;
             case "image":
@@ -109,7 +99,8 @@
     const st = vscode.getState();
     if (st) {
         console.log(JSON.parse(st.text));
-        page.initNotes(JSON.parse(st.text));
+        page.initNotes(JSON.parse(st.text), st.baseUri);
+        marked.use(baseUrl(st.baseUri));
     }
 </script>
 
