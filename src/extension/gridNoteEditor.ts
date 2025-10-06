@@ -12,9 +12,12 @@ interface Note {
     color: string;
     content: string;
     lastEdit: number;
+    created: number;
+    dueDate:number;
     title: string;
     type: string;
     displayTitle: boolean;
+    imageSizing: string;
 }
 
 /**Based on https://github.com/microsoft/vscode-extension-samples/tree/main/custom-editor-sample
@@ -261,9 +264,12 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
             color: props.color ?? "Yellow",
             content: props.content ?? "",
             lastEdit: props.lastEdit ?? Date.now(),
+            created: props.created ?? Date.now(),
+            dueDate: props.dueDate ?? undefined,
             title: props.title ?? "",
             type: props.type ?? "markdown",
             displayTitle: props.type ?? true,
+            imageSizing: props.imageSizing ?? undefined,
         };
 
         this.updateDoc(document, ["notes", id], toAdd);

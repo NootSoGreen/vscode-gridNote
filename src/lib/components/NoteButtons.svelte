@@ -6,13 +6,8 @@
     let displayTypes = $state(false);
 </script>
 
-<div class="note-options">
-    <button
-        title="move"
-        aria-label="note move"
-        class="note-move iconBtn"
-        onmousedown={(event) => moveNote(id, event)}
-    >
+<div class="note-buttons">
+    <button title="move" aria-label="note move" class="note-move iconBtn" onmousedown={(event) => moveNote(id, event)}>
         <i class="codicon codicon-move"></i>
     </button>
     <button
@@ -34,6 +29,22 @@
         }}
     >
         <i class="codicon codicon-trash"></i>
+    </button>
+    <button
+        aria-label="copy note iconBtn"
+        title="copy"
+        class="iconBtn"
+        onclick={() => {
+            //copy note to clipboard
+            navigator.permissions.query({ name: "clipboard-write" }).then((result) => {
+                if (result.state === "granted" || result.state === "prompt") {
+                    navigator.clipboard.writeText(note.toString());
+                }
+            });
+            console.log("copy");
+        }}
+    >
+        <i class="codicon codicon-copy"></i>
     </button>
     <button
         aria-label="edit note iconBtn"
@@ -91,7 +102,7 @@
 </div>
 
 <style>
-    .note-options {
+    .note-buttons {
         display: flex;
         flex-direction: row-reverse;
         align-items: center;
@@ -102,7 +113,7 @@
         height: 2.1rem;
     }
 
-    .note-options > button {
+    .note-buttons > button {
         margin-right: 0.25rem;
     }
 

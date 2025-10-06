@@ -229,7 +229,6 @@ export class Note {
      * @param {String} type
      */
     set type(type) {
-        console.log("set type to " + type);
         if (this.#type != type) {
             this._updateProp("type", type);
             this.#type = type;
@@ -357,13 +356,35 @@ export class Note {
             this.#type = newState.type;
         }
     }
+
+    /**
+     * Returns note as JSON string
+     * @returns {String}
+     */
+    toString() {
+        return JSON.stringify({
+            type: this.#type ?? "markdown",
+            col: this.#col ?? 1,
+            row: this.#row ?? 1,
+            colSpan: this.#colSpan ?? 1,
+            rowSpan: this.#rowSpan ?? 1,
+            color: this.#color ?? "Yellow",
+            content: this.#content ?? "",
+            lastEdit: this.#lastEdit ?? Date.now(),
+            created: this.#created ?? Date.now(),
+            dueDate: this.#dueDate ?? null,
+            title: this.#title ?? "",
+            displayTitle: this.#displayTitle ?? true,
+            imageSizing: this.#imageSizing ?? "contain",
+        });
+    }
 }
 
 /**
  * Page Settings
  */
 export class PageSettings {
-    #columns = $state(6);
+    #columns = $state(12);
     #texMacros = $state("");
     #baseUri = $state("");
     #updates = {};
@@ -372,10 +393,13 @@ export class PageSettings {
     /**
      * Init page settings
      * @param {Object} obj - object providing no. columns for page
+     * @param {String} baseUri
      */
-    constructor(obj) {
-        this.#columns = obj?.columns ?? 6;
+    constructor(obj, baseUri) {
+        this.#columns = obj?.columns ?? 12;
         this.#texMacros = obj?.texMacros ?? "";
+
+        this.#baseUri = baseUri;
     }
 
     /**
@@ -410,12 +434,6 @@ export class PageSettings {
      * @param {String} texMacros
      */
     set texMacros(texMacros) {
-        console.log({
-            new: texMacros,
-            old: this.#texMacros,
-            same: this.#texMacros == texMacros,
-        });
-
         if (this.#texMacros != texMacros) {
             this._updateProp("texMacros", texMacros);
             this.#texMacros = texMacros;
@@ -467,7 +485,7 @@ export class PageSettings {
      * @param {Object} newState - object with updated properties of note
      */
     updateState(newState) {
-        if (this.#columns != (newState.columns ?? 6)) {
+        if (this.#columns != (newState.columns ?? 12)) {
             this.#columns = newState.columns;
         }
 
@@ -489,7 +507,6 @@ export class Page {
      * @param {Object} obj - object providing notes of page
      */
     constructor(obj) {
-        console.log("init_page");
         this.initNotes(obj);
     }
 
@@ -508,19 +525,45 @@ export class Page {
     /**
      * Adds new note
      *
-     * @param {Number} [col=1] col
-     * @param {Number} [row=1] row
-     * @param {Number} [colSpan=1] colSpan
-     * @param {Number} [rowSpan=1] rowSpan
-     * @param {String} [type="markdown"] type
+     *
+     * @param {object} newNote
+     * @param {number} [newNote.col=1] col
+     * @param {number} [newNote.row=1] row
+     * @param {number} [newNote.colSpan=1] colSpan
+     * @param {number} [newNote.rowSpan=1] rowSpan
+     * @param {string} [newNote.type="markdown"] type
+     * @param {string} [newNote.color="Yellow"] color
+     * @param {string} [newNote.content=""] content
+     * @param {string} [newNote.title=""] title
+     * @param {boolean} [newNote.displayTitle=true] displayTitle
+     * @param {string} [newNote.imageSizing="contain"] imageSizing
+     * @param {Date} [newNote.dueDate="Yellow"] dueDate
      */
-    addNoteMsg(col = 1, row = 1, colSpan = 1, rowSpan = 1, type = "markdown") {
+    addNoteMsg({
+        col = 1,
+        row = 1,
+        colSpan = 1,
+        rowSpan = 1,
+        type = "markdown",
+        color = "Yellow",
+        content = "",
+        title = "",
+        displayTitle = true,
+        imageSizing = "contain",
+        dueDate = null,
+    }) {
         let toAdd = {
             col,
             row,
             colSpan,
             rowSpan,
             type,
+            color,
+            content,
+            title,
+            displayTitle,
+            imageSizing,
+            dueDate,
             created: Date.now(),
         };
 
@@ -530,8 +573,8 @@ export class Page {
     /**
      * Adds new note
      *
-     * @param {String} id
-     * @param {Object} obj
+     * @param {string} id
+     * @param {object} obj
      */
     addNote(id, obj) {
         this._page[id] = new Note(obj, id);
@@ -540,7 +583,7 @@ export class Page {
     /**
      * Sends message of note deletion
      *
-     * @param {String} id
+     * @param {string} id
      */
     deleteNoteMsg(id) {
         vscode.postMessage({ type: "delete", id: id });
@@ -549,7 +592,7 @@ export class Page {
     /**
      * Deletes note
      *
-     * @param {String} id
+     * @param {string} id
      */
     deleteNote(id) {
         delete this._page[id];
@@ -558,21 +601,21 @@ export class Page {
     /**
      * Initialises note
      *
-     * @param {Object} obj
+     * @param {object} obj
+     * @param {string} baseUri
      */
-    initNotes(obj) {
-        console.log("notes init");
+    initNotes(obj, baseUri = "") {
         for (let note in obj?.notes) {
             this._page[note] = new Note(obj.notes[note], note);
         }
 
-        this.#settings = new PageSettings(obj?.settings);
+        this.#settings = new PageSettings(obj?.settings, baseUri);
     }
 
     /**
      * Returns notes in an array
      *
-     * @returns {Array}
+     * @returns {array}
      */
     noteList() {
         return Object.keys(this._page);
