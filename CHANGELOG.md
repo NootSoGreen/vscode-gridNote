@@ -1,4 +1,4 @@
-# 0.1.0
+# 0.2.0
 
 - Store and retrieve baseURI on reloads
 - Addition of creation time to note parameters
