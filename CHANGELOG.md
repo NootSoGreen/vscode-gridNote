@@ -1,3 +1,7 @@
+# 0.2.1
+
+- Bugfix for notes with no title bar breaking webview
+
 # 0.2.0
 
 - Store and retrieve baseURI on reloads
