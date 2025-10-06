@@ -327,7 +327,7 @@
                 class:hidden={!displayOptions}
                 style="background-color: var(--vscode-terminal-ansi{note.color});"
             >
-                <NoteOptions {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteOptions>
+                <NoteButtons {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteButtons>
             </div>
         {/if}
     </span>
