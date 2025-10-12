@@ -321,16 +321,16 @@
             class:hidden={!displayOptions}
             onmousedown={(event) => resizeNote(event)}
         ></div>
-        {#if !note.displayTitle}
-            <div
-                class="note-buttons"
-                class:hidden={!displayOptions}
-                style="background-color: var(--vscode-terminal-ansi{note.color});"
-            >
-                <NoteButtons {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteButtons>
-            </div>
-        {/if}
     </span>
+    {#if !note.displayTitle}
+        <div
+            class="note-buttons"
+            style="background-color: var(--vscode-terminal-ansi{note.color});"
+            class:hidden={!displayOptions}
+        >
+            <NoteButtons {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteButtons>
+        </div>
+    {/if}
 </div>
 
 <style>

@@ -7,11 +7,11 @@
 </script>
 
 <div class="note-buttons">
-    <button title="move" aria-label="note move" class="note-move iconBtn" onmousedown={(event) => moveNote(id, event)}>
+    <button title="Move" aria-label="note move" class="note-move iconBtn" onmousedown={(event) => moveNote(id, event)}>
         <i class="codicon codicon-move"></i>
     </button>
     <button
-        title="settings"
+        title="Settings"
         aria-label="note settings"
         class="iconBtn"
         class:selected={displayType == "settings"}
@@ -21,7 +21,7 @@
         <i class="codicon codicon-settings-gear"></i>
     </button>
     <button
-        title="delete"
+        title="Delete"
         aria-label="delete note"
         class="iconBtn"
         onclick={() => {
@@ -32,7 +32,7 @@
     </button>
     <button
         aria-label="copy note iconBtn"
-        title="copy"
+        title="Copy"
         class="iconBtn"
         onclick={() => {
             //copy note to clipboard
@@ -48,7 +48,7 @@
     </button>
     <button
         aria-label="edit note iconBtn"
-        title="edit"
+        title="Edit"
         class="iconBtn"
         class:selected={displayType == "edit"}
         onclick={() => setDisplayType("edit")}
