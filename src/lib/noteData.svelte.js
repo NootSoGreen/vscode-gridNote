@@ -24,6 +24,9 @@ export class Note {
     #dueDate = $state(null);
     #imageSizing;
 
+    #allowNoteEdit = false;
+    #updateForced = false;
+
     /**
      * Create note
      * @param {Object} obj
@@ -293,6 +296,22 @@ export class Note {
     }
 
     /**
+     * Returns allow note edit state
+     * @type {Boolean}
+     */
+    get allowNoteEdit() {
+        return this.#allowNoteEdit;
+    }
+
+    /**
+     * Sets allow note edit state
+     * @param {Boolean} allowNoteEdit
+     */
+    set allowNoteEdit(allowNoteEdit) {
+        this.#allowNoteEdit = allowNoteEdit;
+    }
+
+    /**
      * Send message to update property
      * @param {String} prop - property/key to update
      * @param {any} value
@@ -304,14 +323,30 @@ export class Note {
         //'queue' updates
         setTimeout(() => {
             this.#countUpdates--;
-            if (this.#countUpdates == 0) {
-                vscode.postMessage({
-                    type: "update",
-                    data: Object.values(this.#updates),
-                });
-                this.#updates = {};
+            this.#allowNoteEdit = false;
+            if (this.#countUpdates == 0 && !this.#updateForced) {
+                this.postUpdatesNow();
             }
+            this.#updateForced = false;
         }, 500);
+    }
+
+    /**
+     * Sends updates to client, to be stored to document
+     * @param {Boolean} force - if you need to force an update i.e. after pressing ctrl-z
+     */
+    postUpdatesNow(force = false) {
+        if (force) {
+            this.#updateForced = true;
+            this.#allowNoteEdit = true;
+        } else {
+            this.#allowNoteEdit = false;
+        }
+        vscode.postMessage({
+            type: "update",
+            data: Object.values(this.#updates),
+        });
+        this.#updates = {};
     }
 
     /**
@@ -320,6 +355,11 @@ export class Note {
      * @param {Object} newState - object with updated properties of note
      */
     updateState(newState) {
+        if (!this.#allowNoteEdit) {
+            this.#allowNoteEdit = true;
+            return;
+        }
+
         if (this.#row != newState.row) {
             this.#row = newState.row;
         }
@@ -389,7 +429,6 @@ export class PageSettings {
     #baseUri = $state("");
     #updates = {};
     #countUpdates = 0;
-    #editedNotes = [];
 
     /**
      * Init page settings
@@ -455,22 +494,6 @@ export class PageSettings {
      */
     set baseUri(baseUri) {
         this.#baseUri = baseUri;
-    }
-
-    /**
-     * Returns edited note ids
-     * @type {String[]}
-     */
-    get editedNotes() {
-        return this.#editedNotes;
-    }
-
-    /**
-     * Sets edited notes
-     * @param {String[]} editedNotes
-     */
-    set editedNotes(editedNotes) {
-        this.#editedNotes = editedNotes;
     }
 
     //consider moving this function to Page, then you could pass the function to the constructor of PageSettings and Note

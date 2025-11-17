@@ -72,17 +72,7 @@
     }
 
     function setDisplayType(input) {
-        if (displayType == input) {
-            if (page.settings.editedNotes.includes(id)) {
-                page.settings.editedNotes.splice(page.settings.editedNotes.indexOf(id), 1);
-            }
-            displayType = "";
-        } else {
-            if (!page.settings.editedNotes.includes(id)) {
-                page.settings.editedNotes.push(id);
-            }
-            displayType = input;
-        }
+        displayType = displayType == input ? "" : input;
     }
 
     let initState = null;
@@ -261,7 +251,12 @@
                     }}
                     onkeydown={(e) => {
                         //if user presses tab insert 4 spaces rather than focusing next focusable element
-                        if (e.key === "Tab") {
+                        if (e.key == "z" && (e.ctrlKey || e.metaKey)) {
+                            console.log(e.key);
+                            note.postUpdatesNow(true);
+                        }
+
+                        if (e.key == "Tab") {
                             e.preventDefault();
                             e.target.setRangeText("    ", e.target.selectionStart, e.target.selectionStart, "end");
                         }
