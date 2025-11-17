@@ -3,12 +3,12 @@
     "b4ea80df-027b-4a26-85e0-0c02832f322f": {
       "row": 2,
       "col": 4,
-      "rowSpan": 2,
+      "rowSpan": 3,
       "colSpan": 3,
       "color": "Blue",
       "content": "\\f\\relax{x} = \\int_{-\\infty}^\\infty\n    \\f\\hat\\xi\\,e^{2 \\pi i \\xi x}\n    \\,d\\xi",
       "lastEdit": 1758447498597,
-      "title": "TeX Demo&nbsp;",
+      "title": "TeX Demo",
       "type": "tex",
       "displayTitle": "markdown"
     },
