@@ -60,9 +60,6 @@
     });
 </script>
 
-{#if !note.displayTitle}
-    <div style="height: 2.1rem;"></div>
-{/if}
 <div class="note-colors">
     {#each colors as selColor}
         <button

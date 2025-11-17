@@ -13,7 +13,7 @@ interface Note {
     content: string;
     lastEdit: number;
     created: number;
-    dueDate:number;
+    dueDate: number;
     title: string;
     type: string;
     displayTitle: boolean;
@@ -35,20 +35,16 @@ interface Note {
 export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
     private static panel: vscode.WebviewPanel;
 
-    public static register(
-        context: vscode.ExtensionContext
-    ): vscode.Disposable[] {
+    public static register(context: vscode.ExtensionContext): vscode.Disposable[] {
         const provider = new GridNoteEditorProvider(context);
 
         let subscriptions = [];
         //providerRegistration
 
         subscriptions.push(
-            vscode.window.registerCustomEditorProvider(
-                GridNoteEditorProvider.viewType,
-                provider,
-                { webviewOptions: { enableFindWidget: true } }
-            )
+            vscode.window.registerCustomEditorProvider(GridNoteEditorProvider.viewType, provider, {
+                webviewOptions: { enableFindWidget: true },
+            })
         );
 
         subscriptions.push(
@@ -80,11 +76,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
                     type: "setSort",
                     text: 1,
                 });
-                vscode.commands.executeCommand(
-                    "setContext",
-                    "gravityOn",
-                    false
-                );
+                vscode.commands.executeCommand("setContext", "gravityOn", false);
             })
         );
 
@@ -109,9 +101,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         webviewPanel.webview.options = {
             enableScripts: true,
         };
-        webviewPanel.webview.html = this.getHtmlForWebview(
-            webviewPanel.webview
-        );
+        webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
         GridNoteEditorProvider.panel = webviewPanel;
 
@@ -123,9 +113,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
                     type: "update",
                     text: curDocState,
                     baseUri:
-                        "https://file%2B.vscode-resource.vscode-cdn.net" +
-                        vscode.Uri.file(documentPath).path +
-                        "/",
+                        "https://file%2B.vscode-resource.vscode-cdn.net" + vscode.Uri.file(documentPath).path + "/",
                 });
                 this.documentState = curDocState;
                 console.log("sent updated state");
@@ -140,12 +128,11 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         // Remember that a single text document can also be shared between multiple custom
         // editors (this happens for example when you split a custom editor)
 
-        const changeDocumentSubscription =
-            vscode.workspace.onDidChangeTextDocument((e) => {
-                if (e.document.uri.toString() === document.uri.toString()) {
-                    updateWebview();
-                }
-            });
+        const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
+            if (e.document.uri.toString() === document.uri.toString()) {
+                updateWebview();
+            }
+        });
 
         // Make sure we get rid of the listener when our editor is closed.
         webviewPanel.onDidDispose(() => {
@@ -182,46 +169,25 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
     private getHtmlForWebview(webview: vscode.Webview): string {
         // Local path to script and css for the webview
         const scriptUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                "out",
-                "assets/index.js"
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, "out", "assets/index.js")
         );
         const styleUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                "out",
-                "assets/index.css"
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, "out", "assets/index.css")
         );
 
         //https://github.com/microsoft/vscode-extension-samples/tree/main/webview-codicons-sample
         const codiconsUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                "node_modules",
-                "@vscode/codicons",
-                "dist",
-                "codicon.css"
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, "node_modules", "@vscode/codicons", "dist", "codicon.css")
         );
 
         const katexUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(
-                this.context.extensionUri,
-                "node_modules",
-                "katex",
-                "dist",
-                "katex.min.css"
-            )
+            vscode.Uri.joinPath(this.context.extensionUri, "node_modules", "katex", "dist", "katex.min.css")
         );
 
         // Use a nonce to whitelist which scripts can be run
         const nonce = getNonce();
 
         //unfortunately KaTex requires unsafe inline styling
-
         return /* html */ `
 			<!DOCTYPE html>
 			<html lang="en">
@@ -276,7 +242,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
     }
 
     /**
-     * Delete an existing note from the current document.
+     * Delete a note from the current document.
      */
     private deleteNote(document: vscode.TextDocument, id: string) {
         this.updateDoc(document, ["notes", id], undefined);
@@ -294,37 +260,14 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         try {
             return JSON.parse(text);
         } catch {
-            throw new Error(
-                "Could not get document as json. Content is not valid json"
-            );
+            throw new Error("Could not get document as json. Content is not valid json");
         }
-    }
-
-    /**
-     * Write out the json to a given document.
-     */
-    private updateTextDocument(document: vscode.TextDocument, json: any) {
-        const edit = new vscode.WorkspaceEdit();
-
-        // Just replace the entire document every time for this example extension.
-        // A more complete extension should compute minimal edits instead.
-        edit.replace(
-            document.uri,
-            new vscode.Range(0, 0, document.lineCount, 0),
-            JSON.stringify(json, null, 2)
-        );
-
-        return vscode.workspace.applyEdit(edit);
     }
 
     /**
      * Update document with changes
      */
-    private updateDoc(
-        document: vscode.TextDocument,
-        path: (string | number)[],
-        value: any
-    ) {
+    private updateDoc(document: vscode.TextDocument, path: (string | number)[], value: any) {
         let curState = this.getDocumentAsJson(document);
 
         //store state to check when document updates

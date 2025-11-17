@@ -1,61 +1,16 @@
 <script>
-    let { moveNote, displayType, setDisplayType, note, page, id } = $props();
+    let { moveNote, displayType, setDisplayType, note, page, id, displayOptions } = $props();
 
     import Tex from "./TeX.svelte";
 
     let displayTypes = $state(false);
 </script>
 
-<div class="note-buttons">
-    <button title="Move" aria-label="note move" class="note-move iconBtn" onmousedown={(event) => moveNote(id, event)}>
-        <i class="codicon codicon-move"></i>
-    </button>
-    <button
-        title="Settings"
-        aria-label="note settings"
-        class="iconBtn"
-        class:selected={displayType == "settings"}
-        onclick={() => setDisplayType("settings")}
+<div class="note-buttons" class:hidden={!displayOptions}>
+    <span
+        class="note-type-selector"
+        style:border={displayTypes ? "1px solid var(--vscode-terminal-ansi" + note.color + ")" : ""}
     >
-        <!--includes edit color, type, etc-->
-        <i class="codicon codicon-settings-gear"></i>
-    </button>
-    <button
-        title="Delete"
-        aria-label="delete note"
-        class="iconBtn"
-        onclick={() => {
-            page.deleteNoteMsg(id);
-        }}
-    >
-        <i class="codicon codicon-trash"></i>
-    </button>
-    <button
-        aria-label="copy note iconBtn"
-        title="Copy"
-        class="iconBtn"
-        onclick={() => {
-            //copy note to clipboard
-            navigator.permissions.query({ name: "clipboard-write" }).then((result) => {
-                if (result.state === "granted" || result.state === "prompt") {
-                    navigator.clipboard.writeText(note.toString());
-                }
-            });
-            console.log("copy");
-        }}
-    >
-        <i class="codicon codicon-copy"></i>
-    </button>
-    <button
-        aria-label="edit note iconBtn"
-        title="Edit"
-        class="iconBtn"
-        class:selected={displayType == "edit"}
-        onclick={() => setDisplayType("edit")}
-    >
-        <i class="codicon codicon-edit"></i>
-    </button>
-    <span class="note-type-selector">
         <button
             title="Markdown"
             aria-label="note type markdown"
@@ -99,18 +54,63 @@
             <i class="codicon codicon-file-media"></i>
         </button>
     </span>
+    <button
+        aria-label="edit note iconBtn"
+        title="Edit"
+        class="iconBtn"
+        class:selected={displayType == "edit"}
+        onclick={() => setDisplayType("edit")}
+    >
+        <i class="codicon codicon-edit"></i>
+    </button>
+    <button
+        aria-label="copy note iconBtn"
+        title="Copy"
+        class="iconBtn"
+        onclick={() => {
+            //copy note to clipboard
+            navigator.permissions.query({ name: "clipboard-write" }).then((result) => {
+                if (result.state === "granted" || result.state === "prompt") {
+                    navigator.clipboard.writeText(note.toString());
+                }
+            });
+            console.log("copy");
+        }}
+    >
+        <i class="codicon codicon-copy"></i>
+    </button>
+    <button
+        title="Delete"
+        aria-label="delete note"
+        class="iconBtn"
+        onclick={() => {
+            page.deleteNoteMsg(id);
+        }}
+    >
+        <i class="codicon codicon-trash"></i>
+    </button>
+    <button
+        title="Settings"
+        aria-label="note settings"
+        class="iconBtn"
+        class:selected={displayType == "settings"}
+        onclick={() => setDisplayType("settings")}
+    >
+        <!--includes edit color, type, etc-->
+        <i class="codicon codicon-settings-gear"></i>
+    </button>
+    <button title="Move" aria-label="note move" class="note-move iconBtn" onmousedown={(event) => moveNote(id, event)}>
+        <i class="codicon codicon-move"></i>
+    </button>
 </div>
 
 <style>
     .note-buttons {
         display: flex;
-        flex-direction: row-reverse;
         align-items: center;
-        position: absolute;
-        right: 0;
-        top: 0;
         z-index: 0;
         height: 2.1rem;
+        justify-self: flex-end;
     }
 
     .note-buttons > button {
@@ -119,5 +119,6 @@
 
     .note-type-selector {
         display: flex;
+        border-radius: 0.25rem;
     }
 </style>

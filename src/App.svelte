@@ -46,7 +46,9 @@
                 for (let note in updatedPage.notes) {
                     //if note already loaded, check for updated properties
                     if (noteList.includes(note)) {
-                        page.notes[note].updateState(updatedPage.notes[note]);
+                        if (!page.settings.editedNotes.includes(note)) {
+                            page.notes[note].updateState(updatedPage.notes[note]);
+                        }
                         //remove note from noteList, any notes left will be deleted
                         noteList.splice(noteList.indexOf(note), 1);
                     } else {
@@ -98,7 +100,6 @@
     // State lets us save information across these re-loads
     const st = vscode.getState();
     if (st) {
-        console.log(JSON.parse(st.text));
         page.initNotes(JSON.parse(st.text), st.baseUri);
         marked.use(baseUrl(st.baseUri));
     }

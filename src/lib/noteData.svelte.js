@@ -298,7 +298,7 @@ export class Note {
      * @param {any} value
      */
     async _updateProp(prop, value) {
-        console.log("updating", { prop, value });
+        //console.log("updating", { prop, value });
         this.#updates[prop] = { path: ["notes", this.#id, prop], value: value };
         this.#countUpdates++;
         //'queue' updates
@@ -389,6 +389,7 @@ export class PageSettings {
     #baseUri = $state("");
     #updates = {};
     #countUpdates = 0;
+    #editedNotes = [];
 
     /**
      * Init page settings
@@ -454,6 +455,22 @@ export class PageSettings {
      */
     set baseUri(baseUri) {
         this.#baseUri = baseUri;
+    }
+
+    /**
+     * Returns edited note ids
+     * @type {String[]}
+     */
+    get editedNotes() {
+        return this.#editedNotes;
+    }
+
+    /**
+     * Sets edited notes
+     * @param {String[]} editedNotes
+     */
+    set editedNotes(editedNotes) {
+        this.#editedNotes = editedNotes;
     }
 
     //consider moving this function to Page, then you could pass the function to the constructor of PageSettings and Note

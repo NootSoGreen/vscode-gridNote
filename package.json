@@ -101,22 +101,22 @@
         "publish": "vsce publish"
     },
     "devDependencies": {
-        "@sveltejs/vite-plugin-svelte": "^5.0.3",
-        "@types/node": "^20",
-        "@types/vscode": "^1.73.0",
-        "@vscode/vsce": "^3.6.0",
-        "prettier": "^3.4.2",
-        "prettier-plugin-svelte": "^3.3.2",
-        "svelte": "^5.28.2",
-        "typescript": "^5.8.2",
-        "vite": "^6.0.5"
+        "@sveltejs/vite-plugin-svelte": "^6.2.1",
+        "@types/node": "^24",
+        "@types/vscode": "^1.106.0",
+        "@vscode/vsce": "^3.7.0",
+        "prettier": "^3.6.2",
+        "prettier-plugin-svelte": "^3.4.0",
+        "svelte": "^5.43.8",
+        "typescript": "^5.9.3",
+        "vite": "^7.2.2"
     },
     "dependencies": {
-        "@vscode/codicons": "0.0.20",
-        "dompurify": "^3.2.3",
+        "@vscode/codicons": "0.0.42",
+        "dompurify": "^3.3.0",
         "jsonc-parser": "^3.3.1",
-        "katex": "^0.16.22",
-        "marked": "^15.0.5",
-        "marked-base-url": "^1.1.7"
+        "katex": "^0.16.25",
+        "marked": "^17.0.0",
+        "marked-base-url": "^1.1.8"
     }
 }
