@@ -1,3 +1,21 @@
+# 0.2.3
+
+- On tab within note content input insert 4 spaces rather than focusing next focusable element
+- Avoid updating edited notes with possibly stale note edits received by webview
+- New icons via @vscode/codicons refresh
+- Avoid overlapping note buttons and title
+- Allow note header (including title and buttons) to scroll
+- Removed animation for overflowing title text
+
+# 0.2.2
+
+- Fix for buttons on note without title
+- Default due date displays datetime-local format in input
+
+# 0.2.1
+
+- Bugfix for notes with no title bar breaking webview
+
 # 0.2.0
 
 - Store and retrieve baseURI on reloads

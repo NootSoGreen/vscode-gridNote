@@ -71,24 +71,6 @@
         );
     }
 
-    let scrollLeft = $state(false);
-    let scrollWidth = $state(0);
-    let noteTitleWidth = $state();
-    let noteTitleSpanWidth = $state();
-    let transitionTime = $state(1);
-
-    function scrollTitle() {
-        //scrollWidth = span width / note width
-        scrollWidth = noteTitleSpanWidth - noteTitleWidth;
-        if (scrollWidth > 0) {
-            //1s + 1s for every 100px
-            transitionTime = 1 + scrollWidth / 100;
-            //increase scroll width by width of 118px to account for note options
-            scrollWidth += 118;
-            scrollLeft = true;
-        }
-    }
-
     function setDisplayType(input) {
         displayType = displayType == input ? "" : input;
     }
@@ -214,35 +196,22 @@
     onblur={() => (displayOptions = false)}
 >
     <!-- aspect-ratio: {colSpan + (colSpan - rowSpan) * (16 / cellWidth)}} / {rowSpan + (rowSpan - colSpan) * (16 / cellWidth)}; -->
-    {#if note.displayTitle}
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-            bind:clientWidth={noteTitleWidth}
-            class="note-title"
-            style="grid-template-columns: 1fr {displayOptions
-                ? '118px'
-                : ''}; border-bottom: 1px solid var(--vscode-terminal-ansi{note.color});"
-            onmouseenter={() => {
-                scrollTitle();
-            }}
-            onmouseleave={() => {
-                scrollLeft = false;
-            }}
-        >
-            <div class="titleText">
-                <span
-                    bind:clientWidth={noteTitleSpanWidth}
-                    bind:innerHTML={note.title}
-                    contenteditable="true"
-                    style="{'transition:' + transitionTime + 's;'}{scrollLeft
-                        ? 'transform: translateX(-' + scrollWidth + 'px);'
-                        : ''}"
-                ></span>
-            </div>
-            <div class="note-buttons" class:hidden={!displayOptions}>
-                <NoteButtons {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteButtons>
-            </div>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        class="note-title"
+        class:title-float={!note.displayTitle}
+        style:border-bottom={note.displayTitle ? "1px solid var(--vscode-terminal-ansi" + note.color + ")" : ""}
+    >
+        <div class="titleText" style:min-width={note.displayTitle ? "3rem" : "0"}>
+            {#if note.displayTitle}
+                <input class="title-input" bind:value={note.title} placeholder="Title" />
+            {/if}
         </div>
+
+        <NoteButtons {moveNote} {displayType} {setDisplayType} {note} {page} {id} {displayOptions}></NoteButtons>
+    </div>
+    {#if !note.displayTitle && (displayType == "edit" || displayType == "settings")}
+        <div style="height:2.1rem; background-color: var(--vscode-notebook-cellEditorBackground);"></div>
     {/if}
     <div
         class="note-content"
@@ -278,6 +247,18 @@
                     onfocusout={() => {
                         if (note.content != initState) {
                             note.lastEdit = Date.now();
+                        }
+                    }}
+                    onkeydown={(e) => {
+                        //if user presses tab insert 4 spaces rather than focusing next focusable element
+                        if (e.key == "z" && (e.ctrlKey || e.metaKey)) {
+                            console.log(e.key);
+                            note.postUpdatesNow(true);
+                        }
+
+                        if (e.key == "Tab") {
+                            e.preventDefault();
+                            e.target.setRangeText("    ", e.target.selectionStart, e.target.selectionStart, "end");
                         }
                     }}
                 >
@@ -321,15 +302,6 @@
             class:hidden={!displayOptions}
             onmousedown={(event) => resizeNote(event)}
         ></div>
-        {#if !note.displayTitle}
-            <div
-                class="note-buttons"
-                class:hidden={!displayOptions}
-                style="background-color: var(--vscode-terminal-ansi{note.color});"
-            >
-                <NoteOptions {moveNote} {displayType} {setDisplayType} {note} {page} {id}></NoteOptions>
-            </div>
-        {/if}
     </span>
 </div>
 
@@ -376,10 +348,6 @@
         padding-right: 0.5rem;
     }
 
-    .note-content.full-height > textarea {
-        padding-top: 2.1rem;
-    }
-
     :root {
         --note-yellow: #fae96d;
         --note-green: #019b53;
@@ -403,22 +371,23 @@
     }
 
     .note-title {
-        display: grid;
+        display: flex;
+        /*justify-content: flex-end;*/
         align-items: center;
         height: 2.1rem;
         text-overflow: ellipsis;
         white-space: nowrap;
         max-width: 100%;
         padding-left: 0.5rem;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
         box-sizing: border-box;
     }
 
-    /*note title place holder*/
-    .note-title > div > span[contenteditable]:empty::before {
-        content: "Title";
-        color: #505050;
-        /*TODO define a color to show that text can be updated*/
+    .title-float {
+        position: absolute;
+        width: 100%;
     }
 
     .note-date {
@@ -431,6 +400,25 @@
 
     .note-date.edit {
         background-color: var(--vscode-notebook-cellEditorBackground);
+    }
+
+    .title-input {
+        background: none;
+        border: 0;
+        border-radius: 2px;
+        color: var(--vscode-editor-foreground);
+        outline: 0;
+        border: 1px solid transparent;
+        height: 1.25rem;
+        box-sizing: border-box;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    .title-input:focus {
+        color: var(--vscode-input-foreground);
+        background-color: var(--vscode-input-background);
+        border: 1px solid var(--vscode-focusBorder);
     }
 
     .resize-grab {
@@ -453,17 +441,19 @@
     .note-title > div.titleText {
         display: flex;
         align-items: center;
-        position: relative;
         overflow-x: hidden;
         height: 2.1rem;
+        width: calc(100% - 0.5rem);
+        max-width: calc(100% - 0.5rem);
+        justify-self: flex-start;
     }
 
-    .note-title > div.titleText > span {
+    /*.note-title > div.titleText > span {
         position: absolute;
         white-space: nowrap;
         transform: translateX(0);
         cursor: text;
-    }
+    }*/
     /*need to scroll to cursor position when user clicks on title input
     .note-title > div.titleText > span:focus {
         transform: translateX(0) !important;

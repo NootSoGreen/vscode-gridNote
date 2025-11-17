@@ -98,7 +98,6 @@
     // State lets us save information across these re-loads
     const st = vscode.getState();
     if (st) {
-        console.log(JSON.parse(st.text));
         page.initNotes(JSON.parse(st.text), st.baseUri);
         marked.use(baseUrl(st.baseUri));
     }

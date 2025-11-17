@@ -42,7 +42,7 @@
      */
     function dateToTimestamp(date) {
         //if date isn't yet set return null
-        if (date === undefined || date === "") {
+        if (!date || date === "") {
             return null;
         }
         let dateObj = new Date(date);
@@ -60,9 +60,6 @@
     });
 </script>
 
-{#if !note.displayTitle}
-    <div style="height: 2.1rem;"></div>
-{/if}
 <div class="note-colors">
     {#each colors as selColor}
         <button
