@@ -134,6 +134,12 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
             }
         });
 
+        webviewPanel.onDidChangeViewState((e) => {
+            if (e.webviewPanel.active) {
+                GridNoteEditorProvider.panel = webviewPanel;
+            }
+        });
+
         // Make sure we get rid of the listener when our editor is closed.
         webviewPanel.onDidDispose(() => {
             changeDocumentSubscription.dispose();

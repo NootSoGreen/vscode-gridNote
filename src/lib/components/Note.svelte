@@ -19,7 +19,6 @@
     } = $props();
 
     let displayOptions = $state(false);
-    let displayType = $state("");
 
     /**
      * Returns timestamp in format DD/MM/YYYY HH:mm
@@ -69,10 +68,6 @@
             Math.max(mouseRow - note.row, 0) + 1,
             true
         );
-    }
-
-    function setDisplayType(input) {
-        displayType = displayType == input ? "" : input;
     }
 
     let initState = null;
@@ -208,19 +203,19 @@
             {/if}
         </div>
 
-        <NoteButtons {moveNote} {displayType} {setDisplayType} {note} {page} {id} {displayOptions}></NoteButtons>
+        <NoteButtons {moveNote} {note} {page} {id} {displayOptions}></NoteButtons>
     </div>
-    {#if !note.displayTitle && (displayType == "edit" || displayType == "settings")}
+    {#if !note.displayTitle && (note.displayType == "edit" || note.displayType == "settings")}
         <div style="height:2.1rem; background-color: var(--vscode-notebook-cellEditorBackground);"></div>
     {/if}
     <div
         class="note-content"
-        class:margin-right={displayType == "settings" || (displayType == "edit" && note.type == "image")}
-        class:edit={displayType == "edit"}
+        class:margin-right={note.displayType == "settings" || (note.displayType == "edit" && note.type == "image")}
+        class:edit={note.displayType == "edit"}
         class:full-height={!note.displayTitle}
-        class:center-content={note.type == "image" && displayType == ""}
+        class:center-content={note.type == "image" && note.displayType == ""}
     >
-        {#if displayType == "edit"}
+        {#if note.displayType == "edit"}
             {#if note.type == "image"}
                 <input
                     class="input-field file-path full-width"
@@ -264,7 +259,7 @@
                 >
                 </textarea>
             {/if}
-        {:else if displayType == "settings"}
+        {:else if note.displayType == "settings"}
             <NoteSettings {note}></NoteSettings>
         {:else if note.type == "tex"}
             {#await katex.renderToString( note.content, { throwOnError: false, displayMode: true, macros: page.settings.texMacros ? JSON.parse(page.settings.texMacros) : undefined } ) then cont}
@@ -291,7 +286,7 @@
     <span
         class="note-date"
         title={"Created: " + createdEnum}
-        class:edit={displayType == "edit" || displayType == "settings"}
+        class:edit={note.displayType == "edit" || note.displayType == "settings"}
         >{note.dueDate ? lastEditEnum + " | " : lastEditEnum}<span class:red={overdue}
             >{note.dueDate ? "Due " + dueDateRelative : ""}</span
         >

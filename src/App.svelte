@@ -70,9 +70,11 @@
                     marked.use(baseUrl(page.settings.baseUri));
                 }
 
+                let curState = vscode.getState();
+
                 // Then persist state information.
                 // This state is returned in the call to `vscode.getState` below when a webview is reloaded.
-                vscode.setState({ text, baseUri: message.baseUri });
+                vscode.setState({ text, baseUri: message.baseUri, noteDisplayTypes: curState?.noteDisplayTypes ?? {} });
 
                 break;
             case "delete":
@@ -98,7 +100,7 @@
     // State lets us save information across these re-loads
     const st = vscode.getState();
     if (st) {
-        page.initNotes(JSON.parse(st.text), st.baseUri);
+        page.initNotes(JSON.parse(st.text), st.baseUri, st.noteDisplayTypes);
         marked.use(baseUrl(st.baseUri));
     }
 </script>
@@ -108,7 +110,7 @@
 <main class="full">
     <div class="content">
         <Grid {page} {sortIndex} {marked}></Grid>
-        <SettingsMenu {page} {showSettings}></SettingsMenu>
+        <SettingsMenu {page} {showSettings} {marked}></SettingsMenu>
     </div>
 </main>
 

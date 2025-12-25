@@ -55,3 +55,10 @@ body.vscode-dark {
 .codicon {
     color: var(--content-color-secondary);
 }
+
+table,
+th,
+td {
+    border: 1px solid var(--vscode-editor-foreground);
+    border-collapse: collapse;
+}

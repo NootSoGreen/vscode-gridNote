@@ -1,3 +1,9 @@
+# 0.2.4
+
+- Fixed bug where commands only worked for last loaded webview
+- Store note state (edit/settings etc) to bring back note state when viewing previously unloaded/hidden webview
+- Added markdown quick reference to settings pane
+
 # 0.2.3
 
 - On tab within note content input insert 4 spaces rather than focusing next focusable element

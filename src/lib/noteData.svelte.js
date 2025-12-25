@@ -18,6 +18,7 @@ export class Note {
     #created = $state(null);
     #title = $state("");
     #type = $state("markdown");
+    #displayType = $state("");
     #displayTitle = $state(true);
     #countUpdates = 0;
     #updates = {};
@@ -31,10 +32,12 @@ export class Note {
      * Create note
      * @param {Object} obj
      * @param {String} id
+     * @param {String} [displayType=""] Rendered note state. "" will just show the content, "edit" will show edit state
      */
-    constructor(obj, id) {
+    constructor(obj, id, displayType = "") {
         this.#id = id;
         this.#type = obj.type ?? "markdown";
+        this.#displayType = displayType ?? "";
         this.#col = obj.col ?? 1;
         this.#row = obj.row ?? 1;
         this.#colSpan = obj.colSpan ?? 1;
@@ -235,6 +238,40 @@ export class Note {
         if (this.#type != type) {
             this._updateProp("type", type);
             this.#type = type;
+
+            //store note type state
+        }
+    }
+
+    /**
+     * Get displayed type of note
+     * @type {String}
+     */
+    get displayType() {
+        return this.#displayType;
+    }
+
+    /**
+     * Set displayed note type
+     * @param {String} type
+     */
+    set displayType(type) {
+        //toggle display type
+        this.#displayType = this.#displayType == type ? "" : type;
+
+        //store note display type state
+        let webviewState = vscode.getState();
+        if (webviewState.hasOwnProperty("noteDisplayTypes")) {
+            if (
+                !webviewState.noteDisplayTypes.hasOwnProperty(this.#id) ||
+                webviewState.noteDisplayTypes[this.#id] != this.#displayType
+            ) {
+                webviewState["noteDisplayTypes"][this.#id] = this.#displayType;
+                vscode.setState(webviewState);
+            }
+        } else {
+            webviewState["noteDisplayTypes"] = { [this.#id]: this.#displayType };
+            vscode.setState(webviewState);
         }
     }
 
@@ -503,7 +540,7 @@ export class PageSettings {
      * @param {any} value
      */
     async _updateProp(prop, value) {
-        console.log("updating", { prop, value });
+        //console.log("updating", { prop, value });
         this.#updates[prop] = { path: ["settings", prop], value: value };
         this.#countUpdates++;
         //'queue' updates
@@ -643,10 +680,11 @@ export class Page {
      *
      * @param {object} obj
      * @param {string} baseUri
+     * @param {object} noteDisplayTypes
      */
-    initNotes(obj, baseUri = "") {
+    initNotes(obj, baseUri = "", noteDisplayTypes = {}) {
         for (let note in obj?.notes) {
-            this._page[note] = new Note(obj.notes[note], note);
+            this._page[note] = new Note(obj.notes[note], note, noteDisplayTypes[note]);
         }
 
         this.#settings = new PageSettings(obj?.settings, baseUri);
