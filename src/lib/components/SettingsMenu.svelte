@@ -1,14 +1,45 @@
 <script>
     import DOMPurify from "dompurify";
+    import Tex from "./TeX.svelte";
 
     let { page, showSettings, marked } = $props();
 
     let settingsPage = $state("settings");
+
+    let paneWidth = $state(200);
+
+    function disableSelect(event) {
+        event.preventDefault();
+    }
+
+    function adjustPane(event) {
+        console.log({ pageX: event.pageX, innerWidth: window.innerWidth, width: window.innerWidth - event.pageX });
+        paneWidth = Math.max(window.innerWidth - event.pageX + 2, 200);
+    }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<nav class="side-bar {showSettings ? '' : 'hidden'}">
+<nav class="side-bar {showSettings ? '' : 'hidden'}" style:width={paneWidth + "px"}>
+    <div
+        class="drag-bar"
+        onmousedown={() => {
+            window.addEventListener("selectstart", disableSelect);
+
+            window.addEventListener(
+                "pointerup",
+                () => {
+                    window.removeEventListener("selectstart", disableSelect);
+                    window.removeEventListener("pointermove", adjustPane);
+                },
+                {
+                    once: true,
+                }
+            );
+
+            window.addEventListener("pointermove", adjustPane);
+        }}
+    ></div>
     <div class="side-bar-selector">
         <button
             class="side-bar-title"
@@ -25,27 +56,39 @@
             }}
             title="markdown reference"><i class="codicon codicon-markdown"></i>Ref</button
         >
+        <button
+            class="side-bar-title"
+            class:selected={settingsPage == "tex"}
+            onclick={() => {
+                settingsPage = "tex";
+            }}
+            title="TeX reference"><Tex></Tex>Ref</button
+        >
     </div>
     <div class="side-bar-content">
         {#if settingsPage == "settings"}
-            <p class="input-row">
+            <div class="input-row">
                 <label for="columns">Columns</label>
                 <input name="columns" type="number" bind:value={page.settings.columns} />
-            </p>
-            <p>
+            </div>
+            <div>
                 <span>TeX Macros</span>
                 <textarea bind:value={page.settings.texMacros} class="textarea-input"></textarea>
-            </p>
+            </div>
         {:else if settingsPage == "markdown"}
-            <span
-                >Marked supports the <a href="https://marked.js.org/#specifications">majority</a> of Markdown,
-                <a href="https://spec.commonmark.org/">CommonMark</a>
-                and
-                <a
-                    href="https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax"
-                    >GitHub Flavored Markdown</a
-                > specifications</span
-            >
+            <div>
+                <span
+                    >Marked supports the <a href="https://marked.js.org/#specifications">majority</a> of
+                    <a href="https://daringfireball.net/projects/markdown/">Markdown</a>,
+                    <a href="https://spec.commonmark.org/">CommonMark</a>
+                    and
+                    <a
+                        href="https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax"
+                        >GitHub Flavored Markdown</a
+                    > specifications</span
+                >
+            </div>
+
             <table>
                 <thead><tr><th>Input</th><th>Output</th></tr></thead>
                 <tbody>
@@ -73,7 +116,30 @@
                             {/await}
                         </td></tr
                     >
-
+                    <tr
+                        ><td>&ltsup&gtsup&lt/super&gtscript</td>
+                        <td>
+                            {#await marked.parse("<sup>super</sup>script") then cont}
+                                {@html DOMPurify.sanitize(cont)}
+                            {/await}
+                        </td></tr
+                    >
+                    <tr
+                        ><td>&ltsub&gtsub&lt/sub&gtscript</td>
+                        <td>
+                            {#await marked.parse("<sub>sub</sub>script") then cont}
+                                {@html DOMPurify.sanitize(cont)}
+                            {/await}
+                        </td></tr
+                    >
+                    <tr
+                        ><td>&ltmark&gtHighlighted&lt/mark&gt</td>
+                        <td>
+                            {#await marked.parse("<mark>Highlighted</mark>") then cont}
+                                {@html DOMPurify.sanitize(cont)}
+                            {/await}
+                        </td></tr
+                    >
                     <tr
                         ><td># Heading 1</td>
                         <td>
@@ -99,9 +165,9 @@
                         </td></tr
                     >
                     <tr
-                        ><td>- un<br />- ordered<br />- list</td>
+                        ><td>- unordered<br />- list</td>
                         <td>
-                            {#await marked.parse("- un\n- ordered \n- list") then cont}
+                            {#await marked.parse("- unordered \n- list") then cont}
                                 {@html DOMPurify.sanitize(cont)}
                             {/await}
                         </td></tr
@@ -147,15 +213,28 @@
                         </td></tr
                     >
                     <tr
-                        ><td>![Image](![Image](https://commonmark.org/help/images/favicon.png))</td>
+                        ><td>![Image](![Image](https://example.com/image.png))</td>
                         <td>
-                            {#await marked.parse("![Image](https://commonmark.org/help/images/favicon.png)") then cont}
+                            {#await marked.parse("![Image](https://example.com/image.png)") then cont}
                                 {@html DOMPurify.sanitize(cont)}
                             {/await}
                         </td></tr
                     >
                 </tbody>
             </table>
+        {:else if settingsPage == "tex"}
+            <span><a href="https://katex.org/docs/supported">KaTex Supported Functions</a></span>
+
+            <details>
+                <summary>Accents</summary>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>a'</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </details>
         {/if}
     </div>
 </nav>
@@ -192,9 +271,9 @@
     }
 
     .side-bar {
+        position: relative;
         display: flex;
         flex-direction: column;
-        width: 20vw;
         overflow-y: auto;
         box-sizing: border-box;
         background-color: var(--vscode-sideBar-background);
@@ -203,6 +282,15 @@
     .side-bar-content {
         padding-left: 12px;
         padding-right: 12px;
+        padding-top: 12px;
+    }
+
+    .side-bar-content > div:first-child {
+        margin-top: 0;
+    }
+
+    .side-bar-content > div {
+        margin-top: 12px;
     }
 
     .side-bar-title {
@@ -246,5 +334,16 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+    }
+
+    .drag-bar {
+        position: absolute;
+        width: 4px;
+        height: 100%;
+        cursor: ew-resize;
+    }
+
+    .drag-bar:hover {
+        background-color: var(--vscode-sash-hoverBorder);
     }
 </style>
