@@ -1,20 +1,12 @@
 <script>
-    import DOMPurify from "dompurify";
     import Tex from "./TeX.svelte";
 
-    let { page, showSettings, marked } = $props();
+    let { page, showSettings, paneWidth, adjustPane } = $props();
 
     let settingsPage = $state("settings");
 
-    let paneWidth = $state(200);
-
     function disableSelect(event) {
         event.preventDefault();
-    }
-
-    function adjustPane(event) {
-        console.log({ pageX: event.pageX, innerWidth: window.innerWidth, width: window.innerWidth - event.pageX });
-        paneWidth = Math.max(window.innerWidth - event.pageX + 2, 200);
     }
 </script>
 
@@ -73,7 +65,8 @@
             </div>
             <div>
                 <span>TeX Macros</span>
-                <textarea bind:value={page.settings.texMacros} class="textarea-input"></textarea>
+                <textarea bind:value={page.settings.texMacros} class="textarea-input" style="width: calc(100% - 4px)"
+                ></textarea>
             </div>
         {:else if settingsPage == "markdown"}
             <div>
@@ -88,140 +81,120 @@
                     > specifications</span
                 >
             </div>
-
-            <table>
-                <thead><tr><th>Input</th><th>Output</th></tr></thead>
-                <tbody>
-                    <tr
-                        ><td>*Italic*</td>
-                        <td>
-                            {#await marked.parse("*Italic*") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>**Bold**</td>
-                        <td>
-                            {#await marked.parse("**Bold**") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>~~Strikethrough~~</td>
-                        <td>
-                            {#await marked.parse("~~Strikethrough~~") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>&ltsup&gtsup&lt/super&gtscript</td>
-                        <td>
-                            {#await marked.parse("<sup>super</sup>script") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>&ltsub&gtsub&lt/sub&gtscript</td>
-                        <td>
-                            {#await marked.parse("<sub>sub</sub>script") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>&ltmark&gtHighlighted&lt/mark&gt</td>
-                        <td>
-                            {#await marked.parse("<mark>Highlighted</mark>") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td># Heading 1</td>
-                        <td>
-                            {#await marked.parse("# Heading 1") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>## Heading 2</td>
-                        <td>
-                            {#await marked.parse("## Heading 2") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>### Heading 3</td>
-                        <td>
-                            {#await marked.parse("### Heading 3") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>- unordered<br />- list</td>
-                        <td>
-                            {#await marked.parse("- unordered \n- list") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>1. ordered<br />2. list</td>
-                        <td>
-                            {#await marked.parse("1. ordered\n2. list") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>&gt Blockquote</td>
-                        <td>
-                            {#await marked.parse("> Blockquote") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>`let someCode...`</td>
-                        <td>
-                            {#await marked.parse("`let someCode...`") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>```//code block<br />let someMoreCode...<br />```</td>
-                        <td>
-                            {#await marked.parse("```//code block\nlet someMoreCode...\n```") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>[Link](example.com)</td>
-                        <td>
-                            {#await marked.parse(`[Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ)`) then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                    <tr
-                        ><td>![Image](![Image](https://example.com/image.png))</td>
-                        <td>
-                            {#await marked.parse("![Image](https://example.com/image.png)") then cont}
-                                {@html DOMPurify.sanitize(cont)}
-                            {/await}
-                        </td></tr
-                    >
-                </tbody>
-            </table>
+            <div style="overflow:auto">
+                <table>
+                    <thead><tr><th>Input</th><th>Output</th></tr></thead>
+                    <tbody>
+                        <tr
+                            ><td>*Italic*</td>
+                            <td>
+                                <p><em>Italic</em></p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>**Bold**</td>
+                            <td>
+                                <p><strong>Bold</strong></p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>~~Strikethrough~~</td>
+                            <td>
+                                <p><del>Strikethrough</del></p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>&ltsup&gtsup&lt/super&gtscript</td>
+                            <td>
+                                <p><sup>super</sup>script</p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>&ltsub&gtsub&lt/sub&gtscript</td>
+                            <td>
+                                <p><sup>super</sup>script</p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>&ltmark&gtHighlighted&lt/mark&gt</td>
+                            <td>
+                                <p><mark>Highlighted</mark></p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td># Heading 1</td>
+                            <td>
+                                <h1>Heading 1</h1>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>## Heading 2</td>
+                            <td>
+                                <h2>Heading 2</h2>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>### Heading 3</td>
+                            <td>
+                                <h3>Heading 3</h3>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>- unordered<br />- list</td>
+                            <td>
+                                <ul>
+                                    <li>unordered</li>
+                                    <li>list</li>
+                                </ul>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>1. ordered<br />2. list</td>
+                            <td>
+                                <ol>
+                                    <li>ordered</li>
+                                    <li>list</li>
+                                </ol>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>&gt Blockquote</td>
+                            <td>
+                                <blockquote>
+                                    <p>Blockquote</p>
+                                </blockquote>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>`let someCode...`</td>
+                            <td>
+                                <p><code>let someCode...</code></p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>```<br />//code block<br />let someMoreCode...<br />```</td>
+                            <td>
+                                <pre><code
+                                        >//code block
+let someMoreCode...
+</code></pre>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>[Link](example.com)</td>
+                            <td>
+                                <p><a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">Link</a></p>
+                            </td></tr
+                        >
+                        <tr
+                            ><td>![Image](![Image](https://example.com/image.png))</td>
+                            <td>
+                                <p><img src="https://example.com/image.png" alt="Example" /></p>
+                            </td></tr
+                        >
+                    </tbody>
+                </table>
+            </div>
         {:else if settingsPage == "tex"}
             <span><a href="https://katex.org/docs/supported">KaTex Supported Functions</a></span>
 
@@ -249,7 +222,6 @@
 
     table {
         width: 100%;
-        margin-right: 12px;
     }
 
     .side-bar-selector {

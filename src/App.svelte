@@ -21,6 +21,50 @@
 
     let sortIndex = $state(1);
 
+    /**
+     * Updates stored webview state
+     * @param {String} prop
+     * @param {any} update
+     * @param {String} subProp
+     */
+    function updateState(prop, update, subProp = null) {
+        let webviewState = vscode.getState();
+
+        if (subProp !== null) {
+            if (webviewState.hasOwnProperty(prop)) {
+                if (typeof update == "object" || webviewState.noteDisplayTypes[prop][subProp] != update) {
+                    webviewState[prop][subProp] = update;
+                    vscode.setState(webviewState);
+                }
+            } else {
+                webviewState[prop] = { [subProp]: update };
+                vscode.setState(webviewState);
+            }
+        } else {
+            if (webviewState.hasOwnProperty(prop)) {
+                if (typeof update == "object" || webviewState.noteDisplayTypes[prop] != update) {
+                    webviewState[prop] = update;
+                    vscode.setState(webviewState);
+                }
+            } else {
+                webviewState[prop] = update;
+                vscode.setState(webviewState);
+            }
+        }
+    }
+
+    let paneWidth = $state(400);
+
+    /**
+     * Sets settings pane width with provided event (expected to be triggered on user adjusting pane width)
+     * @param event
+     */
+    function adjustPane(event) {
+        console.log({ pageX: event.pageX, innerWidth: window.innerWidth, width: window.innerWidth - event.pageX });
+        paneWidth = Math.max(window.innerWidth - event.pageX + 2, 400);
+        updateState("paneWidth", paneWidth);
+    }
+
     // Handle messages sent from the extension to the webview
     window.addEventListener("message", (event) => {
         console.log("message received");
@@ -51,7 +95,7 @@
                         noteList.splice(noteList.indexOf(note), 1);
                     } else {
                         //new note, add it
-                        page.addNote(note, updatedPage.notes[note]);
+                        page.addNote(note, updatedPage.notes[note], updateState);
                     }
                 }
 
@@ -84,9 +128,11 @@
                 break;
             case "toggleSettings":
                 showSettings = !showSettings;
+                updateState("showSettings", showSettings);
                 break;
             case "setSort":
                 sortIndex = JSON.parse(text);
+                updateState("sortIndex", sortIndex);
                 break;
             case "image":
                 let imagePath = JSON.parse(text);
@@ -100,8 +146,11 @@
     // State lets us save information across these re-loads
     const st = vscode.getState();
     if (st) {
-        page.initNotes(JSON.parse(st.text), st.baseUri, st.noteDisplayTypes);
+        page.initNotes(JSON.parse(st.text), st.baseUri, st.noteDisplayTypes, updateState);
         marked.use(baseUrl(st.baseUri));
+        showSettings = st?.showSettings ?? false;
+        sortIndex = st?.sortIndex ?? 1;
+        paneWidth = st?.paneWidth ?? 400;
     }
 </script>
 
@@ -110,7 +159,7 @@
 <main class="full">
     <div class="content">
         <Grid {page} {sortIndex} {marked}></Grid>
-        <SettingsMenu {page} {showSettings} {marked}></SettingsMenu>
+        <SettingsMenu {page} {showSettings} {paneWidth} {adjustPane}></SettingsMenu>
     </div>
 </main>
 

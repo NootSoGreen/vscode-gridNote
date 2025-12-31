@@ -24,6 +24,7 @@ export class Note {
     #updates = {};
     #dueDate = $state(null);
     #imageSizing;
+    #updateState;
 
     #allowNoteEdit = false;
     #updateForced = false;
@@ -32,9 +33,12 @@ export class Note {
      * Create note
      * @param {Object} obj
      * @param {String} id
+     * @param {function} updateState
      * @param {String} [displayType=""] Rendered note state. "" will just show the content, "edit" will show edit state
      */
-    constructor(obj, id, displayType = "") {
+    constructor(obj, id, updateState, displayType = "") {
+        this.#updateState = updateState;
+
         this.#id = id;
         this.#type = obj.type ?? "markdown";
         this.#displayType = displayType ?? "";
@@ -260,19 +264,7 @@ export class Note {
         this.#displayType = this.#displayType == type ? "" : type;
 
         //store note display type state
-        let webviewState = vscode.getState();
-        if (webviewState.hasOwnProperty("noteDisplayTypes")) {
-            if (
-                !webviewState.noteDisplayTypes.hasOwnProperty(this.#id) ||
-                webviewState.noteDisplayTypes[this.#id] != this.#displayType
-            ) {
-                webviewState["noteDisplayTypes"][this.#id] = this.#displayType;
-                vscode.setState(webviewState);
-            }
-        } else {
-            webviewState["noteDisplayTypes"] = { [this.#id]: this.#displayType };
-            vscode.setState(webviewState);
-        }
+        this.#updateState("noteDisplayTypes", this.#displayType, this.#id);
     }
 
     /**
@@ -652,9 +644,10 @@ export class Page {
      *
      * @param {string} id
      * @param {object} obj
+     * @param {function} updateState
      */
-    addNote(id, obj) {
-        this._page[id] = new Note(obj, id);
+    addNote(id, obj, updateState) {
+        this._page[id] = new Note(obj, id, updateState);
     }
 
     /**
@@ -681,10 +674,11 @@ export class Page {
      * @param {object} obj
      * @param {string} baseUri
      * @param {object} noteDisplayTypes
+     * @param {function} updateState
      */
-    initNotes(obj, baseUri = "", noteDisplayTypes = {}) {
+    initNotes(obj, baseUri = "", noteDisplayTypes = {}, updateState = null) {
         for (let note in obj?.notes) {
-            this._page[note] = new Note(obj.notes[note], note, noteDisplayTypes[note]);
+            this._page[note] = new Note(obj.notes[note], note, updateState, noteDisplayTypes[note]);
         }
 
         this.#settings = new PageSettings(obj?.settings, baseUri);

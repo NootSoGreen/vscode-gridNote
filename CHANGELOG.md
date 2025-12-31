@@ -1,9 +1,11 @@
 # 0.2.4
 
 - Fixed bug where commands only worked for last loaded webview
-- Store note state (edit/settings etc) to bring back note state when viewing previously unloaded/hidden webview
+- Temp store note state (edit/settings etc) to bring back note state when viewing previously unloaded/hidden webview
 - Added markdown quick reference to settings pane
 - Allow user to resize settings pane
+- Temp store settings pane state
+- Temp store note sort state
 
 # 0.2.3
 
