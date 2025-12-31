@@ -18,11 +18,13 @@ export class Note {
     #created = $state(null);
     #title = $state("");
     #type = $state("markdown");
+    #displayType = $state("");
     #displayTitle = $state(true);
     #countUpdates = 0;
     #updates = {};
     #dueDate = $state(null);
     #imageSizing;
+    #updateState;
 
     #allowNoteEdit = false;
     #updateForced = false;
@@ -31,10 +33,15 @@ export class Note {
      * Create note
      * @param {Object} obj
      * @param {String} id
+     * @param {function} updateState
+     * @param {String} [displayType=""] Rendered note state. "" will just show the content, "edit" will show edit state
      */
-    constructor(obj, id) {
+    constructor(obj, id, updateState, displayType = "") {
+        this.#updateState = updateState;
+
         this.#id = id;
         this.#type = obj.type ?? "markdown";
+        this.#displayType = displayType ?? "";
         this.#col = obj.col ?? 1;
         this.#row = obj.row ?? 1;
         this.#colSpan = obj.colSpan ?? 1;
@@ -235,7 +242,29 @@ export class Note {
         if (this.#type != type) {
             this._updateProp("type", type);
             this.#type = type;
+
+            //store note type state
         }
+    }
+
+    /**
+     * Get displayed type of note
+     * @type {String}
+     */
+    get displayType() {
+        return this.#displayType;
+    }
+
+    /**
+     * Set displayed note type
+     * @param {String} type
+     */
+    set displayType(type) {
+        //toggle display type
+        this.#displayType = this.#displayType == type ? "" : type;
+
+        //store note display type state
+        this.#updateState("noteDisplayTypes", this.#displayType, this.#id);
     }
 
     /**
@@ -503,7 +532,7 @@ export class PageSettings {
      * @param {any} value
      */
     async _updateProp(prop, value) {
-        console.log("updating", { prop, value });
+        //console.log("updating", { prop, value });
         this.#updates[prop] = { path: ["settings", prop], value: value };
         this.#countUpdates++;
         //'queue' updates
@@ -615,9 +644,10 @@ export class Page {
      *
      * @param {string} id
      * @param {object} obj
+     * @param {function} updateState
      */
-    addNote(id, obj) {
-        this._page[id] = new Note(obj, id);
+    addNote(id, obj, updateState) {
+        this._page[id] = new Note(obj, id, updateState);
     }
 
     /**
@@ -643,10 +673,12 @@ export class Page {
      *
      * @param {object} obj
      * @param {string} baseUri
+     * @param {object} noteDisplayTypes
+     * @param {function} updateState
      */
-    initNotes(obj, baseUri = "") {
+    initNotes(obj, baseUri = "", noteDisplayTypes = {}, updateState = null) {
         for (let note in obj?.notes) {
-            this._page[note] = new Note(obj.notes[note], note);
+            this._page[note] = new Note(obj.notes[note], note, updateState, noteDisplayTypes[note]);
         }
 
         this.#settings = new PageSettings(obj?.settings, baseUri);

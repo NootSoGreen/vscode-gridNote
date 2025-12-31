@@ -1,5 +1,5 @@
 <script>
-    let { moveNote, displayType, setDisplayType, note, page, id, displayOptions } = $props();
+    let { moveNote, note, page, id, displayOptions } = $props();
 
     import Tex from "./TeX.svelte";
 
@@ -58,8 +58,8 @@
         aria-label="edit note iconBtn"
         title="Edit"
         class="iconBtn"
-        class:selected={displayType == "edit"}
-        onclick={() => setDisplayType("edit")}
+        class:selected={note.displayType == "edit"}
+        onclick={() => (note.displayType = "edit")}
     >
         <i class="codicon codicon-edit"></i>
     </button>
@@ -93,8 +93,8 @@
         title="Settings"
         aria-label="note settings"
         class="iconBtn"
-        class:selected={displayType == "settings"}
-        onclick={() => setDisplayType("settings")}
+        class:selected={note.displayType == "settings"}
+        onclick={() => (note.displayType = "settings")}
     >
         <!--includes edit color, type, etc-->
         <i class="codicon codicon-settings-gear"></i>

@@ -455,6 +455,7 @@
     .grid-padding {
         width: 100%;
         overflow-y: scroll;
+        flex: 1;
         /*scrollbar-width: none;*/
     }
 
