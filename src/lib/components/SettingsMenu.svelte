@@ -1,4 +1,5 @@
 <script>
+    import KaTeXReference from "./KaTeXReference.svelte";
     import Tex from "./TeX.svelte";
 
     let { page, showSettings, paneWidth, adjustPane } = $props();
@@ -7,14 +8,18 @@
 
     function disableSelect(event) {
         event.preventDefault();
+        dragBarSelected = true;
     }
+
+    let dragBarSelected = $state(false);
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<nav class="side-bar {showSettings ? '' : 'hidden'}" style:width={paneWidth + "px"}>
+<nav class="side-bar" class:hidden={!showSettings} style:width={paneWidth + "px"}>
     <div
         class="drag-bar"
+        class:selected={dragBarSelected}
         onmousedown={() => {
             window.addEventListener("selectstart", disableSelect);
 
@@ -23,10 +28,11 @@
                 () => {
                     window.removeEventListener("selectstart", disableSelect);
                     window.removeEventListener("pointermove", adjustPane);
+                    dragBarSelected = false;
                 },
                 {
                     once: true,
-                }
+                },
             );
 
             window.addEventListener("pointermove", adjustPane);
@@ -61,12 +67,11 @@
         {#if settingsPage == "settings"}
             <div class="input-row">
                 <label for="columns">Columns</label>
-                <input name="columns" type="number" bind:value={page.settings.columns} />
+                <input class="settings" name="columns" type="number" bind:value={page.settings.columns} />
             </div>
             <div>
                 <span>TeX Macros</span>
-                <textarea bind:value={page.settings.texMacros} class="textarea-input" style="width: calc(100% - 4px)"
-                ></textarea>
+                <textarea bind:value={page.settings.texMacros} class="textarea-input"></textarea>
             </div>
         {:else if settingsPage == "markdown"}
             <div>
@@ -104,7 +109,7 @@
                             </td></tr
                         >
                         <tr
-                            ><td>&ltsup&gtsup&lt/super&gtscript</td>
+                            ><td>&ltsup&gtsup&lt/sup&gtscript</td>
                             <td>
                                 <p><sup>super</sup>script</p>
                             </td></tr
@@ -112,7 +117,7 @@
                         <tr
                             ><td>&ltsub&gtsub&lt/sub&gtscript</td>
                             <td>
-                                <p><sup>super</sup>script</p>
+                                <p><sub>sub</sub>script</p>
                             </td></tr
                         >
                         <tr
@@ -158,6 +163,15 @@
                             </td></tr
                         >
                         <tr
+                            ><td>- [x] Check<br />- [ ] list</td>
+                            <td>
+                                <ul>
+                                    <li><input checked disabled type="checkbox" />Check</li>
+                                    <li><input disabled type="checkbox" />list</li>
+                                </ul>
+                            </td></tr
+                        >
+                        <tr
                             ><td>&gt Blockquote</td>
                             <td>
                                 <blockquote>
@@ -166,18 +180,15 @@
                             </td></tr
                         >
                         <tr
-                            ><td>`let someCode...`</td>
+                            ><td>`let someCode = true`</td>
                             <td>
-                                <p><code>let someCode...</code></p>
+                                <p><code>let someCode = true</code></p>
                             </td></tr
                         >
                         <tr
-                            ><td>```<br />//code block<br />let someMoreCode...<br />```</td>
+                            ><td>```<br />//code block<br />let someMoreCode = 1<br />```</td>
                             <td>
-                                <pre><code
-                                        >//code block
-let someMoreCode...
-</code></pre>
+                                <pre><code>//code block<br />let someMoreCode = 1</code></pre>
                             </td></tr
                         >
                         <tr
@@ -187,28 +198,40 @@ let someMoreCode...
                             </td></tr
                         >
                         <tr
-                            ><td>![Image](![Image](https://example.com/image.png))</td>
+                            ><td>![Image](https://example.com/image.png)</td>
                             <td>
                                 <p><img src="https://example.com/image.png" alt="Example" /></p>
                             </td></tr
                         >
-                    </tbody>
-                </table>
-            </div>
-        {:else if settingsPage == "tex"}
-            <span><a href="https://katex.org/docs/supported">KaTex Supported Functions</a></span>
-
-            <details>
-                <summary>Accents</summary>
-                <table>
-                    <tbody>
                         <tr>
-                            <td>a'</td>
+                            <td
+                                >| Left aligned | Center aligned | Right aligned|<br
+                                />|:-------------|:--------------:|-------------:|<br />|Col 1 |Col 2 |Col 3 |</td
+                            >
+
+                            <td>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th align="left">Left aligned</th>
+                                            <th align="center">Center aligned</th>
+                                            <th align="right">Right aligned</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody
+                                        ><tr>
+                                            <td align="left">Col 1</td>
+                                            <td align="center">Col 2</td>
+                                            <td align="right">Col 3</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
-            </details>
-        {/if}
+            </div>
+        {:else if settingsPage == "tex"}<KaTeXReference></KaTeXReference>{/if}
     </div>
 </nav>
 
@@ -273,7 +296,7 @@ let someMoreCode...
         font-weight: 400;
     }
 
-    input {
+    input.settings {
         color: var(--vscode-input-foreground);
         background-color: var(--vscode-input-background);
         outline-color: var(--vscode-focusBorder);
@@ -290,12 +313,14 @@ let someMoreCode...
         color: var(--vscode-input-foreground);
         background-color: var(--vscode-input-background);
         outline-color: var(--vscode-focusBorder);
+        padding: 3px 6px 3px 6px;
         border: 0;
         border-radius: 2px;
         field-sizing: content;
         resize: vertical;
-        width: 100%;
+        width: calc(100% - 12px);
         margin-right: 12px;
+        min-height: 18px;
     }
 
     label {
@@ -315,7 +340,8 @@ let someMoreCode...
         cursor: ew-resize;
     }
 
-    .drag-bar:hover {
+    .drag-bar:hover,
+    .drag-bar.selected {
         background-color: var(--vscode-sash-hoverBorder);
     }
 </style>

@@ -243,7 +243,7 @@
                 mouseCol,
                 mouseRow,
                 page.notes[selectedNote].colSpan,
-                page.notes[selectedNote].rowSpan
+                page.notes[selectedNote].rowSpan,
             );
 
             console.log([newCol, newRow, page.notes[selectedNote].colSpan, page.notes[selectedNote].rowSpan]);
@@ -328,7 +328,7 @@
         row = previewRow,
         colSpan = previewColSpan,
         rowSpan = previewRowSpan,
-        display = displayPreview
+        display = displayPreview,
     ) {
         previewCol = col;
         previewRow = row;
@@ -362,7 +362,7 @@
                     pasteData.col,
                     pasteData.row,
                     pasteData.colSpan,
-                    pasteData.rowSpan
+                    pasteData.rowSpan,
                 );
 
                 page.addNoteMsg(pasteData);

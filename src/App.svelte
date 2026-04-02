@@ -32,7 +32,11 @@
 
         if (subProp !== null) {
             if (webviewState.hasOwnProperty(prop)) {
-                if (typeof update == "object" || webviewState.noteDisplayTypes[prop][subProp] != update) {
+                if (
+                    typeof update == "object" ||
+                    !webviewState[prop].hasOwnProperty(subProp) ||
+                    webviewState[prop][subProp] != update
+                ) {
                     webviewState[prop][subProp] = update;
                     vscode.setState(webviewState);
                 }
@@ -42,7 +46,7 @@
             }
         } else {
             if (webviewState.hasOwnProperty(prop)) {
-                if (typeof update == "object" || webviewState.noteDisplayTypes[prop] != update) {
+                if (typeof update == "object" || webviewState[prop] != update) {
                     webviewState[prop] = update;
                     vscode.setState(webviewState);
                 }
@@ -60,15 +64,14 @@
      * @param event
      */
     function adjustPane(event) {
-        console.log({ pageX: event.pageX, innerWidth: window.innerWidth, width: window.innerWidth - event.pageX });
+        //console.log({ pageX: event.pageX, innerWidth: window.innerWidth, width: window.innerWidth - event.pageX });
         paneWidth = Math.max(window.innerWidth - event.pageX + 2, 400);
         updateState("paneWidth", paneWidth);
     }
 
     // Handle messages sent from the extension to the webview
     window.addEventListener("message", (event) => {
-        console.log("message received");
-        console.log(event);
+        console.log("message received", { event });
 
         const message = event.data; // The json data that the extension sent
         const text = message.text;

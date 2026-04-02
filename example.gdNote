@@ -1,8 +1,13 @@
 {
   "notes": {
     "b4ea80df-027b-4a26-85e0-0c02832f322f": {
+<<<<<<< Updated upstream
       "row": 2,
       "col": 4,
+=======
+      "row": 5,
+      "col": 5,
+>>>>>>> Stashed changes
       "rowSpan": 2,
       "colSpan": 3,
       "color": "Blue",
@@ -13,26 +18,26 @@
       "displayTitle": "markdown"
     },
     "b122159e-f204-4f68-98d6-80b90ba5a551": {
-      "row": 1,
-      "col": 9,
+      "row": 4,
+      "col": 8,
       "rowSpan": 4,
       "colSpan": 4,
       "color": "Cyan",
       "content": "icons/gridNote-icon.png",
       "lastEdit": 1758444339439,
-      "title": "Image",
+      "title": "Grid Note Icon",
       "type": "image",
       "displayTitle": "markdown",
       "imageSizing": "contain"
     },
     "4cf0cdc5-0399-4ab5-bbf1-9214ad6618bf": {
-      "row": 3,
-      "col": 1,
-      "rowSpan": 3,
+      "row": 2,
+      "col": 11,
+      "rowSpan": 2,
       "colSpan": 2,
-      "color": "Yellow",
-      "content": "- [x] create this gif\n- [ ] update README\n",
-      "lastEdit": 1758447513015,
+      "color": "Cyan",
+      "content": "- [x] Add content to example\n- [ ] update gif\n- [ ] update README\n",
+      "lastEdit": 1774678754426,
       "title": "TODO",
       "type": "markdown",
       "displayTitle": "markdown"
@@ -41,13 +46,43 @@
       "row": 1,
       "col": 1,
       "rowSpan": 1,
-      "colSpan": 8,
+      "colSpan": 12,
       "color": "Yellow",
       "content": "# Hello World",
       "lastEdit": 1758447864857,
       "title": "Relevant Title",
       "type": "markdown",
       "displayTitle": false
+    },
+    "c940e864-5293-487b-b144-6d0ae421d962": {
+      "row": 2,
+      "col": 1,
+      "rowSpan": 2,
+      "colSpan": 10,
+      "color": "Yellow",
+      "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse magna libero, vehicula eget feugiat nec, ullamcorper ultricies lectus. Integer tincidunt, erat sed bibendum accumsan, ex dolor vehicula augue, ut tempor neque turpis eget massa. Sed tellus metus, porttitor non quam et, mattis dapibus massa. Etiam sed nisl augue. Praesent tincidunt scelerisque magna laoreet aliquam. Nunc vitae purus quis purus mattis hendrerit. Aliquam eget neque neque. Suspendisse laoreet lectus non lectus semper, eu pretium magna tempor. Nunc velit magna, sodales quis sodales pretium, eleifend eu enim. Suspendisse eleifend dui eu porta pharetra.\n\nCurabitur fermentum, lacus eu laoreet molestie, nisi erat lobortis leo, sed aliquam justo augue eu tortor. Duis vel felis ullamcorper, auctor dui ac, ullamcorper nulla. Vestibulum sed risus id metus ullamcorper posuere vitae et risus. Maecenas a commodo sem, nec iaculis dolor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Morbi ultrices aliquam pulvinar. Fusce posuere dolor ac congue commodo. Curabitur maximus nisi eget turpis viverra, in tempus quam facilisis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Cras blandit, dui vel ornare egestas, enim odio faucibus purus, sed venenatis tortor ipsum ac sapien. Nunc pulvinar nisl vitae imperdiet ultrices. Aenean sit amet lectus quis turpis finibus pellentesque dictum sed est. \n\nEtiam posuere eros eget nisi aliquam, id consectetur justo ultricies. Praesent lacus velit, placerat ut eros et, hendrerit dignissim lacus. Proin vitae diam nec ante consequat fermentum nec sed felis. Nam eu metus vel erat imperdiet malesuada. Donec hendrerit eros nec urna iaculis pellentesque. Duis ac erat tincidunt, pretium ex sed, vehicula leo. In a convallis tortor, ut volutpat metus. Ut pretium justo turpis, vel placerat enim ornare eu. ",
+      "lastEdit": 1774679092507,
+      "created": 1774678557058,
+      "title": "Lorem Ipsum",
+      "type": "markdown",
+      "displayTitle": "markdown",
+      "imageSizing": "contain",
+      "dueDate": "2026-12-31T22:00:00.000Z"
+    },
+    "8ae483ea-3c5a-48e5-aa6b-c377e0e7f574": {
+      "row": 4,
+      "col": 1,
+      "rowSpan": 4,
+      "colSpan": 3,
+      "color": "Yellow",
+      "content": "*Italic*\n**Bold**\n~~Strikethrough~~\n<sup>sup</sup>script\n<sub>sub</sub>script\n<mark>Highlighted</mark>\n# Heading 1\n## Heading 2\n### Heading 3\n- unordered\n- list \n1. ordered \n2. list\n\n> blockquote\n\n`let someCode = true`\n```\n//code block\nlet someMoreCode = 1\n```\n[Link](example.com)\n\n![Image](https://example.com/image.png)\n\n| Left aligned | Center aligned | Right aligned|\n|:-------------|:--------------:|-------------:|\n|Col 1 |Col 2 |Col 3 |\n",
+      "lastEdit": 1774678990071,
+      "created": 1774678656277,
+      "title": "Markdown demo",
+      "type": "markdown",
+      "displayTitle": "markdown",
+      "imageSizing": "contain",
+      "dueDate": "2025-05-31T23:55:00.000Z"
     }
   },
   "settings": {
