@@ -64,7 +64,6 @@
      * @param event
      */
     function adjustPane(event) {
-        //console.log({ pageX: event.pageX, innerWidth: window.innerWidth, width: window.innerWidth - event.pageX });
         paneWidth = Math.max(window.innerWidth - event.pageX + 2, 400);
         updateState("paneWidth", paneWidth);
     }

@@ -249,20 +249,36 @@
 
     .side-bar-selector {
         display: flex;
-        background-color: var(--vscode-editor-background);
+        background-color: var(--vscode-editorGroupHeader-tabsBackground);
+        position: relative;
+    }
+
+    .side-bar-selector::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        z-index: 9;
+        pointer-events: none;
+        background-color: var(--vscode-sideBar-border);
+        width: 100%;
+        height: 1px;
     }
 
     .side-bar-selector > button {
         padding: 8px;
-        background-color: var(--vscode-editor-background);
+        background-color: var(--vscode-tab-inactiveBackground);
         border: 0;
-        border-right: 1px solid var(--vscode-sideBar-background);
-        color: var(--vscode-editor-foreground);
+        border-right: 1px solid var(--vscode-editorGroup-border);
+        border-top: 1px solid transparent;
+        color: var(--vscode-sideBarTitle-foreground);
         cursor: pointer;
     }
 
     .side-bar-selector > button.selected {
         background-color: var(--vscode-sideBar-background);
+        border-top: 1px solid var(--vscode-tab-selectedBorderTop);
+        z-index: 10;
     }
 
     .side-bar {
@@ -272,6 +288,9 @@
         overflow-y: auto;
         box-sizing: border-box;
         background-color: var(--vscode-sideBar-background);
+        border: 1px solid var(--vscode-sideBar-border);
+        border-right: 0;
+        border-bottom: 0;
     }
 
     .side-bar-content {
@@ -303,7 +322,7 @@
         height: 24px;
         padding: 3px 6px 3px 6px;
         box-sizing: border-box;
-        border: 0;
+        border: 1px solid var(--vscode-input-border, transparent);
         border-radius: 2px;
         width: 100%;
         flex: 1;
@@ -314,11 +333,11 @@
         background-color: var(--vscode-input-background);
         outline-color: var(--vscode-focusBorder);
         padding: 3px 6px 3px 6px;
-        border: 0;
+        border: 1px solid var(--vscode-input-border, transparent);
         border-radius: 2px;
         field-sizing: content;
         resize: vertical;
-        width: calc(100% - 12px);
+        width: calc(100% - 14px);
         margin-right: 12px;
         min-height: 18px;
     }
@@ -343,5 +362,6 @@
     .drag-bar:hover,
     .drag-bar.selected {
         background-color: var(--vscode-sash-hoverBorder);
+        z-index: 11;
     }
 </style>

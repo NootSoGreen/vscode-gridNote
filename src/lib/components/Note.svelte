@@ -477,7 +477,7 @@
         height: 24px;
         padding: 3px 6px 3px 6px;
         box-sizing: border-box;
-        border: 0;
+        border: 1px solid var(--vscode-input-border, transparent);
         border-radius: 2px;
         flex: 1;
     }

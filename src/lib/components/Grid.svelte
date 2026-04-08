@@ -58,10 +58,11 @@
     let initMouseY = null;
 
     function gridMouseDown(event) {
-        pasteHere.focus();
-
-        //note div click stops propagation to grid, only want left click to trigger
+        //continue if left click on grid
         if (event.button === 0 && event.target.id == "grid") {
+            //must target grid to be able to paste to add note
+            //else you disallow a user from shift selecting text with mouse when clicking on a note :(
+            pasteHere.focus();
             initMouseX = event.clientX;
             initMouseY = event.clientY;
             [mouseDownCol, mouseDownRow] = cellPosition(event.clientX, event.clientY);
