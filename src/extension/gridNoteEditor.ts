@@ -121,7 +121,7 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
 
         let toggleGravity = (bool: boolean) => {
             noteSort = bool;
-            console.log({ stored: GridNoteEditorProvider.noteSort, note: noteSort });
+            //console.log({ stored: GridNoteEditorProvider.noteSort, note: noteSort });
         };
 
         GridNoteEditorProvider.toggleGravity = toggleGravity;
@@ -152,7 +152,6 @@ export class GridNoteEditorProvider implements vscode.CustomTextEditorProvider {
         // editors (this happens for example when you split a custom editor)
 
         const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
-            console.log("doc_updated" + rand);
             if (e.document.uri.toString() === document.uri.toString()) {
                 updateWebview();
             }

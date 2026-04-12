@@ -2,9 +2,7 @@
     import KaTeXReference from "./KaTeXReference.svelte";
     import Tex from "./TeX.svelte";
 
-    let { page, showSettings, paneWidth, adjustPane } = $props();
-
-    let settingsPage = $state("settings");
+    let { page, showSettings, settingsPage, paneWidth, adjustPane, updatePage } = $props();
 
     function disableSelect(event) {
         event.preventDefault();
@@ -43,14 +41,14 @@
             class="side-bar-title"
             class:selected={settingsPage == "settings"}
             onclick={() => {
-                settingsPage = "settings";
+                updatePage("settings");
             }}>SETTINGS</button
         >
         <button
             class="side-bar-title"
             class:selected={settingsPage == "markdown"}
             onclick={() => {
-                settingsPage = "markdown";
+                updatePage("markdown");
             }}
             title="markdown reference"><i class="codicon codicon-markdown"></i>Ref</button
         >
@@ -58,7 +56,7 @@
             class="side-bar-title"
             class:selected={settingsPage == "tex"}
             onclick={() => {
-                settingsPage = "tex";
+                updatePage("tex");
             }}
             title="TeX reference"><Tex></Tex>Ref</button
         >
@@ -200,7 +198,7 @@
                         <tr
                             ><td>![Image](https://example.com/image.png)</td>
                             <td>
-                                <p><img src="https://example.com/image.png" alt="Example" /></p>
+                                <p><img alt="Example" /></p>
                             </td></tr
                         >
                         <tr>

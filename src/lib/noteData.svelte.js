@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { setContext, getContext } from "svelte";
 
 let vscode;
