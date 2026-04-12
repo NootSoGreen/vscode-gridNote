@@ -66,7 +66,7 @@
             note.row,
             Math.max(mouseCol - note.col, 0) + 1,
             Math.max(mouseRow - note.row, 0) + 1,
-            true
+            true,
         );
     }
 
@@ -175,9 +175,6 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-    onclick={(event) => {
-        event.stopPropagation();
-    }}
     role="note"
     class="note"
     style="border: 1px solid var(--vscode-terminal-ansi{note.color}); grid-column:{!sortIndex
@@ -262,7 +259,7 @@
         {:else if note.displayType == "settings"}
             <NoteSettings {note}></NoteSettings>
         {:else if note.type == "tex"}
-            {#await katex.renderToString( note.content, { throwOnError: false, displayMode: true, macros: page.settings.texMacros ? JSON.parse(page.settings.texMacros) : undefined } ) then cont}
+            {#await katex.renderToString( note.content, { throwOnError: false, displayMode: true, macros: page.settings.texMacros ? JSON.parse(page.settings.texMacros) : undefined }, ) then cont}
                 {@html DOMPurify.sanitize(cont)}
             {/await}
         {:else if note.type == "image"}
@@ -273,7 +270,7 @@
                     class="image"
                     class:contain-image={note.imageSizing == "contain"}
                     src={page.settings.baseUri + note.content}
-                    alt="provided"
+                    alt={note.content}
                 />
             {/if}
         {:else}
@@ -480,7 +477,7 @@
         height: 24px;
         padding: 3px 6px 3px 6px;
         box-sizing: border-box;
-        border: 0;
+        border: 1px solid var(--vscode-input-border, transparent);
         border-radius: 2px;
         flex: 1;
     }
