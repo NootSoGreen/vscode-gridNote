@@ -1,11 +1,7 @@
 {
     "name": "grid-note-vscode-extension",
     "displayName": "Grid Note",
-<<<<<<< HEAD
     "version": "0.2.4",
-=======
-    "version": "0.2.5",
->>>>>>> a1e6224a909e7f5904638e3c9056b33fce0348ad
     "description": "Note editor with grid layout extension for VS Code",
     "license": "GPL-3.0-or-later",
     "author": "MattWasHere",
