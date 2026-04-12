@@ -49,7 +49,7 @@
         return `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, "0")}-${dateObj.getDate().toString().padStart(2, "0")}T${dateObj.getHours().toString().padStart(2, "0")}:${dateObj.getMinutes().toString().padStart(2, "0")}`;
     }
 
-    let dueDateTimestamp = $state(dateToTimestamp(note.dueDate));
+    let dueDateTimestamp = $derived(dateToTimestamp(note.dueDate));
 
     $effect(() => {
         let newTimestamp = timestampToDate(dueDateTimestamp);
@@ -95,6 +95,7 @@
         justify-content: space-between;
         padding: 0.5rem;
         border-radius: 0.25rem;
+        border: 1px solid var(--vscode-input-border, transparent);
         margin-top: 0.5rem;
         background-color: var(--vscode-input-background);
         margin-bottom: 10px;
@@ -122,7 +123,7 @@
         height: 24px;
         padding: 3px 6px 3px 6px;
         box-sizing: border-box;
-        border: 0;
+        border: 1px solid var(--vscode-input-border, transparent);
         border-radius: 2px;
         width: 100%;
         flex: 1;

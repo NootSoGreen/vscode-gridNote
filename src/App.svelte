@@ -19,6 +19,8 @@
 
     let showSettings = $state(false);
 
+    let settingsPage = $state("settings");
+
     let sortIndex = $state(1);
 
     /**
@@ -29,10 +31,13 @@
      */
     function updateState(prop, update, subProp = null) {
         let webviewState = vscode.getState();
-
         if (subProp !== null) {
             if (webviewState.hasOwnProperty(prop)) {
-                if (typeof update == "object" || webviewState.noteDisplayTypes[prop][subProp] != update) {
+                if (
+                    typeof update == "object" ||
+                    !webviewState[prop].hasOwnProperty(subProp) ||
+                    webviewState[prop][subProp] != update
+                ) {
                     webviewState[prop][subProp] = update;
                     vscode.setState(webviewState);
                 }
@@ -42,7 +47,7 @@
             }
         } else {
             if (webviewState.hasOwnProperty(prop)) {
-                if (typeof update == "object" || webviewState.noteDisplayTypes[prop] != update) {
+                if (typeof update == "object" || webviewState[prop] != update) {
                     webviewState[prop] = update;
                     vscode.setState(webviewState);
                 }
@@ -60,15 +65,13 @@
      * @param event
      */
     function adjustPane(event) {
-        console.log({ pageX: event.pageX, innerWidth: window.innerWidth, width: window.innerWidth - event.pageX });
         paneWidth = Math.max(window.innerWidth - event.pageX + 2, 400);
         updateState("paneWidth", paneWidth);
     }
 
     // Handle messages sent from the extension to the webview
     window.addEventListener("message", (event) => {
-        console.log("message received");
-        console.log(event);
+        //console.log("message received", { event });
 
         const message = event.data; // The json data that the extension sent
         const text = message.text;
@@ -83,7 +86,7 @@
                 //text should be "{notes:[<noteId>: <Note_Obj>], settings: {columns: <+int>}}"
                 let updatedPage = JSON.parse(text);
 
-                console.log(updatedPage);
+                //console.log(updatedPage);
 
                 let noteList = page.noteList();
 
@@ -99,16 +102,18 @@
                     }
                 }
 
+                //delete remaining notes not removed above
                 for (let note of noteList) {
                     page.deleteNote(note);
                 }
 
                 // Update webview's content
-                //page.initNotes(updatedPage);
+                //page.initPage(updatedPage);
                 if (updatedPage.settings) {
                     page.settings.updateState(updatedPage.settings);
                 }
 
+                //set baseUri to be used when accessing/displaying local images
                 if (page.settings.baseUri != message.baseUri) {
                     page.settings.baseUri = message.baseUri;
                     marked.use(baseUrl(page.settings.baseUri));
@@ -118,7 +123,13 @@
 
                 // Then persist state information.
                 // This state is returned in the call to `vscode.getState` below when a webview is reloaded.
-                vscode.setState({ text, baseUri: message.baseUri, noteDisplayTypes: curState?.noteDisplayTypes ?? {} });
+                vscode.setState({
+                    text,
+                    baseUri: message.baseUri,
+                    noteDisplayTypes: curState?.noteDisplayTypes ?? {},
+                    showSettings,
+                    settingsPage,
+                });
 
                 break;
             case "delete":
@@ -146,9 +157,10 @@
     // State lets us save information across these re-loads
     const st = vscode.getState();
     if (st) {
-        page.initNotes(JSON.parse(st.text), st.baseUri, st.noteDisplayTypes, updateState);
+        page.initPage(JSON.parse(st.text), st.baseUri, st.noteDisplayTypes, updateState);
         marked.use(baseUrl(st.baseUri));
         showSettings = st?.showSettings ?? false;
+        settingsPage = st?.settingsPage ?? "settings";
         sortIndex = st?.sortIndex ?? 1;
         paneWidth = st?.paneWidth ?? 400;
     }
@@ -159,7 +171,17 @@
 <main class="full">
     <div class="content">
         <Grid {page} {sortIndex} {marked}></Grid>
-        <SettingsMenu {page} {showSettings} {paneWidth} {adjustPane}></SettingsMenu>
+        <SettingsMenu
+            {page}
+            {showSettings}
+            {settingsPage}
+            {paneWidth}
+            {adjustPane}
+            updatePage={(page) => {
+                updateState("settingsPage", page);
+                settingsPage = page;
+            }}
+        ></SettingsMenu>
     </div>
 </main>
 
