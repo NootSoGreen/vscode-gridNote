@@ -1,7 +1,8 @@
 <script>
-    /*import katex from "katex";
+    import katex from "katex";
+    import KaTeXReferenceTable from "./KaTeXReferenceTable.svelte";
 
-    const text = [
+    const accents = [
         ["a'  ", "\\tilde{a}", "\\mathring{g}"],
         ["a''", "\\widetilde{ac}  ", "\\overgroup{AB}"],
         ["a^{\\prime} ", "\\utilde{AB}  ", "\\undergroup{AB}"],
@@ -17,2283 +18,866 @@
         ["\\hat{\\theta}", "\\widecheck{ac}  ", "\\underlinesegment{AB}"],
         ["", "\\widehat{ac}", ""],
     ];
-    let output = "";
-    for (let row of text) {
-        output += "<tr>";
-        for (let col of row) {
-            output += "<td>";
-            output += katex.renderToString(col, { throwOnError: false, displayMode: true });
-            output += "<code>" + col.replace("{", "&lbrace;").replace("}", "&rbrace;") + "</code>";
-            output += "</td>";
-        }
-        output += "</tr>";
-    }*/
-    //console.log(output);
+
+    const accentsInside = [
+        ["\\'{a}", "\\~{a}", "\\.{a}", "\\H{a}"],
+        ["\\`{a}", "\\={a}", '\\"{a}', "\\v{a}"],
+        ["\\^{a}", "\\u{a}", "\\r{a}"],
+    ];
+
+    const delimiters = [
+        ["( )", "\\lparen\n\\rparen", "⌈ ⌉", "\\lceil\n\\rceil", "\\uparrow"],
+        ["[ ]", "\\lbrack\n\\rbrack", "⌊ ⌋", "\\lfloor\n\\rfloor", "\\downarrow"],
+        ["\\{ \\}", "\\lbrace\n\\rbrace", "⎰⎱", "\\lmoustache\n\\rmoustache", "\\updownarrow"],
+        ["⟨ ⟩", "\\langle\n\\rangle", "⟮ ⟯", "\\lgroup\n\\rgroup", "\\Uparrow"],
+        ["|", "\\vert", "┌ ┐", "\\ulcorner\n\\urcorner", "\\Downarrow"],
+        ["\\|", "\\Vert", "└ ┘", "\\llcorner\n\\lrcorner", "\\Updownarrow"],
+        ["\\lvert\n\\rvert", "\\lVert\n\\rVert", "\\lBrace \\rBrace", "\\backslash", "/"],
+        ["\\lang\n\\rang", "\\lt\n\\gt", "⟦ ⟧", "\\llbracket\n\\rrbracket"],
+    ];
+
+    const delimiterSizing = [
+        ["\\left", "\\big", "\\bigl", "\\bigm", "\\bigr"],
+        ["\\middle", "\\Big", "\\Bigl", "\\Bigm", "\\Bigr"],
+        ["\\right", "\\bigg", "\\biggl", "\\biggm", "\\biggr"],
+        ["", "\\Bigg", "\\Biggl", "\\Biggm", "\\Biggr"],
+    ];
+
+    const environments = [
+        ["\\begin{matrix}\na & b \\\\ \nc & d\n\\end{matrix}", "\\begin{array}{cc}\na & b \\\\ \nc & d\n\\end{array}"],
+        [
+            "\\begin{pmatrix}\na & b \\\\ \nc & d\n\\end{pmatrix}",
+            "\\begin{bmatrix}\na & b \\\\ \nc & d\n\\end{bmatrix}",
+        ],
+        [
+            "\\begin{vmatrix}\na & b \\\\ \nc & d\n\\end{vmatrix}",
+            "\\begin{Vmatrix}\na & b \\\\ \nc & d\n\\end{Vmatrix}",
+        ],
+        [
+            "\\begin{Bmatrix}\na & b \\\\ \nc & d\n\\end{Bmatrix}",
+            "\\def\\arraystretch{1.5}\n\\begin{array}{c:c:c}\na & b & c \\\\ \\hline\nd & e & f \\\\ \n \\hdashline \n g & h & i \n \\end{array}",
+        ],
+        [
+            "x = \\begin{cases} \n a &\text{if } b \\\\ \n c &\\text{if } d \n \\end{cases}",
+            "\\begin{rcases} \n a &\text{if } b \\\\ \n c &\\text{if } d \n \\end{rcases}⇒…",
+        ],
+        [
+            "\\begin{smallmatrix} \n a & b \\\\ \n c & d \n \\end{smallmatrix}",
+            "\\sum_{ \\begin{subarray}{l} i\\in\\Lambda\\\\ \n 0<j<n \n \\end{subarray}}",
+        ],
+    ];
+
+    const addEnviro = [
+        [
+            "\\begin{equation} \n \\begin{split} a &=b+c\\\\ \n  &=e+f \n \\end{split} \n \\end{equation}",
+            "\\begin{align} \n a&=b+c \\\\ \n d+e&=f \n \\end{align}",
+        ],
+        [
+            "\\begin{gather}\na=b \\\\ \n e=b+c \n \\end{gather}",
+            "\\begin{alignat} \n {2} \n 10&x+&3&y=2\\\\ \n 3&x+&13&y=4 \n \\end{alignat}",
+        ],
+        ["\\begin{CD} \n A @>a>> B \\\\ \n @VbVV @AAcA \\\\ \n C @= D \n \\end{CD}"],
+    ];
+
+    const greek = [
+        ["\\Alpha", "\\Beta", "\\Gamma", "\\Delta"],
+        ["\\Epsilon", "\\Zeta", "\\Eta", "\\Theta"],
+        ["\\Iota", "\\Kappa", "\\Lambda", "\\Mu"],
+        ["\\Nu", "\\Xi", "\\Omicron", "\\Pi"],
+        ["\\Rho", "\\Sigma", "\\Tau", "\\Upsilon"],
+        ["\\Phi", "\\Chi", "\\Psi", "\\Omega"],
+        ["\\varGamma", "\\varDelta", "\\varTheta", "\\varLambda"],
+        ["\\varXi", "\\varPi", "\\varSigma", "\\varUpsilon"],
+        ["\\varPhi", "\\varPsi", "\\varOmega", ""],
+        ["\\alpha", "\\beta", "\\gamma", "\\delta"],
+        ["\\epsilon", "\\zeta", "\\eta", "\\theta"],
+        ["\\iota", "\\kappa", "\\lambda", "\\mu"],
+        ["\\nu", "\\xi", "\\omicron", "\\pi"],
+        ["\\rho", "\\sigma", "\\tau", "\\upsilon"],
+        ["\\phi", "\\chi", "\\psi", "\\omega"],
+        ["\\varepsilon", "\\varkappa", "\\vartheta", "\\thetasym"],
+        ["\\varpi", "\\varrho", "\\varsigma", "\\varphi"],
+        ["\\digamma"],
+    ];
+
+    const otherLetters = [
+        ["\\imath", "\\nabla", "\\Im", "\\Reals", "\\text{\\OE}"],
+        ["\\jmath", "\\partial", "\\image", "\\wp", "\\text{\\o}"],
+        ["\\aleph", "\\Game", "\\Bbbk", "\\weierp", "\\text{\\O}"],
+        ["\\alef", "\\Finv", "\\N", "\\Z", "\\text{\\ss}"],
+        ["\\alefsym", "\\cnums", "\\natnums", "\\text{\\aa}", "\\text{\\i}"],
+        ["\\beth", "\\Complex", "\\R", "\\text{\\AA}", "\\text{\\j}"],
+        ["\\gimel", "\\ell", "\\Re", "\\text{\\ae}"],
+        ["\\daleth", "\\hbar", "\\real", "\\text{\\AE}"],
+        ["\\eth", "\\hslash", "\\reals", "\\text{\\oe}"],
+    ];
+
+    const lsTheory = [
+        ["\\forall", "\\complement", "\\therefore", "\\emptyset"],
+        ["\\exists", "\\subset", "\\because", "\\empty"],
+        ["\\exist", "\\supset", "\\mapsto", "\\varnothing"],
+        ["\\nexists", "\\mid", "\\to", "\\implies"],
+        ["\\in", "\\land", "\\gets", "\\impliedby"],
+        ["\\isin", "\\lor", "\\leftrightarrow", "\\iff"],
+        ["\\notin", "\\ni", "\\notni", "\\neg \\lnot"],
+        ["", "\\Set{ x | x<\\frac 1 2 }", "\\set{x|x<5}", ""],
+    ];
+
+    const annotation = [
+        ["\\cancel{5}", "\\overbrace{a+b+c}^{\\text{note}}"],
+        ["\\bcancel{5}", "\\underbrace{a+b+c}_{\\text{note}}"],
+        ["\\xcancel{ABC}", "\\not ="],
+        ["\\text{\\sout{abc}}", "\\boxed{\\pi=\\frac c d}"],
+        ["a_{\\angl n}", "a_\\angln"],
+        ["\\overbracket{a+b+c}^{\\text{note}}", "\\underbracket{a+b+c}_{\\text{note}}"],
+        ["\\phase{-78^\\circ}"],
+        ["\\tag{hi} x+y^{2x}", "\\tag*{hi} x+y^{2x}"],
+    ];
+
+    const vertLayout = [
+        ["x_n", "\\stackrel{!}{=}", "a \\atop b"],
+        ["e^x", "\\overset{!}{=}", "a\\raisebox{0.25em}{\$b\$}c"],
+        ["_u^o", "\\underset{!}{=}", "a+\\left(\\vcenter{\\frac{\\frac a b}c}\\right)"],
+        ["", "", "\\sum_{\\substack{0<i<m\\\\0<j<n}}"],
+    ];
+
+    const overlap = [
+        ["{=}\\mathllap{/\\,}", "\\left(x^{\\smash{2}}\\right)"],
+        ["\\mathrlap{\\,/}{=}", "\\sqrt{\\smash[b]{y}}"],
+        ["\\sum_{\\mathclap{1\\le i\\le j\\le n}} x_{ij}"],
+    ];
+
+    const macros = [
+        ["\\def\\foo{x^2} \\foo + \\foo"],
+        ["\\gdef\\foo#1{#1^2} \\foo{y} + \\foo{y}"],
+        ["\\edef\\macroname#1#2…{definition to be expanded}"],
+        ["\\xdef\\macroname#1#2…{definition to be expanded}"],
+        ["\\let\\foo=\\bar"],
+        ["\\futurelet\\foo\\bar x"],
+        ["\\global\\def\\macroname#1#2…{definition}"],
+        //update these to avoid running KaTex on these
+        ["\\newcommand\\macroname[numargs]{definition}"],
+        ["\\renewcommand\\macroname[numargs]{definition}"],
+        ["\\providecommand\\macroname[numargs]{definition}"],
+    ];
+
+    const operators = [
+        ["\\sum", "\\prod", "\\bigotimes", "\\bigvee"],
+        ["\\int", "\\coprod", "\\bigoplus", "\\bigwedge"],
+        ["\\iint", "\\intop", "\\bigodot", "\\bigcap"],
+        ["\\iiint", "\\smallint", "\\biguplus", "\\bigcup"],
+        ["\\oint", "\\oiint", "\\oiiint", "\\bigsqcup"],
+    ];
+
+    const binOps = [
+        ["+", "\\cdot", "\\gtrdot", "\\pmod a"],
+        ["-", "\\cdotp", "\\intercal", "\\pod a"],
+        ["/", "\\centerdot", "\\land", "\\rhd"],
+        ["*", "\\circ", "\\leftthreetimes", "\\rightthreetimes"],
+        ["\\amalg", "\\circledast", "\\ldotp", "\\rtimes"],
+        ["\\And", "\\circledcirc", "\\lor", "\\setminus"],
+        ["\\ast", "\\circleddash", "\\lessdot", "\\smallsetminus"],
+        ["\\barwedge", "\\Cup", "\\lhd", "\\sqcap"],
+        ["\\bigcirc", "\\cup", "\\ltimes", "\\sqcup"],
+        ["\\bmod", "\\curlyvee", "\\mod a", "\\times"],
+        ["\\boxdot", "\\curlywedge", "\\mp", "\\unlhd"],
+        ["\\boxminus", "\\div", "\\odot", "\\unrhd"],
+        ["\\boxplus", "\\divideontimes", "\\ominus", "\\uplus"],
+        ["\\boxtimes", "\\dotplus", "\\oplus", "\\vee"],
+        ["\\bullet", "\\doublebarwedge", "\\otimes", "\\veebar"],
+        ["\\Cap", "\\doublecap", "\\oslash", "\\wedge"],
+        ["\\cap", "\\doublecup", "\\pm or \\plusmn", "\\wr"],
+    ];
+
+    const frac = [
+        ["\\frac{a}{b}", "\\tfrac{a}{b}", "\\genfrac ( ] {2pt}{1}a{a+1}"],
+        ["{a \\over b}", "\\dfrac{a}{b}", "{a \\above{2pt} b+1}"],
+        ["a/b", "", "\\cfrac{a}{1 + \\cfrac{1}{b}}"],
+    ];
+
+    const binomials = [
+        ["\\binom{n}{k}", "\\dbinom{n}{k}", "{n\\brace k}"],
+        ["{n \\choose k}", " \\tbinom{n}{k}", "{n\\brack k}"],
+    ];
+
+    const mathOps = [
+        ["\\arcsin", "\\cosec", "\\deg", "\\sec"],
+        ["\\arccos", "\\cosh", "\\dim", "\\sin"],
+        ["\\arctan", "\\cot", "\\exp", "\\sinh"],
+        ["\\arctg", "\\cotg", "\\hom", "\\sh"],
+        ["\\arcctg", "\\coth", "\\ker", "\\tan"],
+        ["\\arg", "\\csc", "\\lg", "\\tanh"],
+        ["\\ch", "\\ctg", "\\ln", "\\tg"],
+        ["\\cos", "\\cth", "\\log", "\\th"],
+        ["\\operatorname{f}"],
+        ["\\argmax", "\\injlim", "\\min", "\\varinjlim"],
+        ["\\argmin", "\\lim", "\\plim", "\\varliminf"],
+        ["\\det", "\\liminf", "\\Pr", "\\varlimsup"],
+        ["\\gcd", "\\limsup", "\\projlim", "\\varprojlim"],
+        ["\\inf", "\\max", "\\sup"],
+        ["\\operatorname*{f}", "\\operatornamewithlimits{f}"],
+    ];
+
+    const braketNotation = [
+        ["\\bra{\\phi}", "\\ket{\\psi}", "\\braket{\\phi|\\psi}"],
+        ["\\Bra{\\phi}", "\\Ket{\\psi}", "\\Braket{ ϕ | \\frac{∂^2}{∂ t^2} | ψ }"],
+    ];
+
+    const colors = [
+        ["\\color{blue} F=ma"],
+        ["\\textcolor{blue}{F=ma}"],
+        ["\\textcolor{#228B22}{F=ma}"],
+        ["\\colorbox{aqua}{$F=ma$}"],
+        ["\\fcolorbox{red}{aqua}{$F=ma$}"],
+    ];
+
+    const relations = [
+        ["=", "\\doteqdot", "\\lessapprox", "\\smile"],
+        ["<", "\\eqcirc", "\\lesseqgtr", "\\sqsubset"],
+        [">", "\\eqcolon or \\minuscolon", "\\lesseqqgtr", "\\sqsubseteq"],
+        [":", "\\Eqcolon or \\minuscoloncolon", "\\lessgtr", "\\sqsupset"],
+        ["\\approx", "\\eqqcolon or \\equalscolon", "\\lesssim", "\\sqsupseteq"],
+        ["\\approxcolon", "\\Eqqcolon or \\equalscoloncolon", "\\ll", "\\Subset"],
+        ["\\approxcoloncolon", "\\eqsim", "\\lll", "\\subset or \\sub"],
+        ["\\approxeq", "\\eqslantgtr", "\\llless", "\\subseteq or \\sube"],
+        ["\\asymp", "\\eqslantless", "\\lt", "\\subseteqq"],
+        ["\\backepsilon", "\\equiv", "\\mid", "\\succ"],
+        ["\\backsim", "\\fallingdotseq", "\\models", "\\succapprox"],
+        ["\\backsimeq", "\\frown", "\\multimap", "\\succcurlyeq"],
+        ["\\between", "\\ge", "\\origof", "\\succeq"],
+        ["\\bowtie", "\\geq", "\\owns", "\\succsim"],
+        ["\\bumpeq", "\\geqq", "\\parallel", "\\Supset"],
+        ["\\Bumpeq", "\\geqslant", "\\perp", "\\supset"],
+        ["\\circeq", "\\gg", "\\pitchfork", "\\supseteq or \\supe"],
+        ["\\colonapprox", "\\ggg", "\\prec", "\\supseteqq"],
+        ["\\Colonapprox or \\coloncolonapprox", "\\gggtr", "\\precapprox", "\\thickapprox"],
+        ["\\coloneq or \\colonminus", "\\gt", "\\preccurlyeq", "\\thicksim"],
+        ["\\Coloneq or \\coloncolonminus", "\\gtrapprox", "\\preceq", "\\trianglelefteq"],
+        ["\\coloneqq or \\colonequals", "\\gtreqless", "\\precsim", "\\triangleq"],
+        ["\\Coloneqq or \\coloncolonequals", "\\gtreqqless", "\\propto", "\\trianglerighteq"],
+        ["\\colonsim", "\\gtrless", "\\risingdotseq", "\\varpropto"],
+        ["\\Colonsim or \\coloncolonsim", "\\gtrsim", "\\shortmid", "\\vartriangle"],
+        ["\\cong", "\\imageof", "\\shortparallel", "\\vartriangleleft"],
+        ["\\curlyeqprec", "\\in or \\isin", "\\sim", "\\vartriangleright"],
+        ["\\curlyeqsucc", "\\Join", "\\simcolon", "\\vcentcolon or \\ratio"],
+        ["\\dashv", "\\le", "\\simcoloncolon", "\\vdash"],
+        ["\\dblcolon or \\coloncolon", "\\leq", "\\simeq", "\\vDash"],
+        ["\\doteq", "\\leqq", "\\smallfrown", "\\Vdash"],
+        ["\\Doteq", "\\leqslant", "\\smallsmile", "\\Vvdash"],
+    ];
+
+    const negRelations = [
+        ["\\gnapprox", "\\ngeqslant", "\\nsubseteq", "\\precneqq"],
+        ["\\gneq", "\\ngtr", "\\nsubseteqq", "\\precnsim"],
+        ["\\gneqq", "\\nleq", "\\nsucc", "\\subsetneq"],
+        ["\\gnsim", "\\nleqq", "\\nsucceq", "\\subsetneqq"],
+        ["\\gvertneqq", "\\nleqslant", "\\nsupseteq", "\\succnapprox"],
+        ["\\lnapprox", "\\nless", "\\nsupseteqq", "\\succneqq"],
+        ["\\lneq", "\\nmid", "\\ntriangleleft", "\\succnsim"],
+        ["\\lneqq", "\\notin", "\\ntrianglelefteq", "\\supsetneq"],
+        ["\\lnsim", "\\notni", "\\ntriangleright", "\\supsetneqq"],
+        ["\\lvertneqq", "\\nparallel", "\\ntrianglerighteq", "\\varsubsetneq"],
+        ["\\ncong", "\\nprec", "\\nvdash", "\\varsubsetneqq"],
+        ["\\ne", "\\npreceq", "\\nvDash", "\\varsupsetneq"],
+        ["\\neq", "\\nshortmid", "\\nVDash", "\\varsupsetneqq"],
+        ["\\ngeq", "\\nshortparallel", "\\nVdash"],
+        ["\\ngeqq", "\\nsim", "\\precnapprox"],
+    ];
+
+    const arrows = [
+        ["\\circlearrowleft", "\\leftharpoonup", "\\rArr"],
+        ["\\circlearrowright", "\\leftleftarrows", "\\rarr"],
+        ["\\curvearrowleft", "\\leftrightarrow", "\\restriction"],
+        ["\\curvearrowright", "\\Leftrightarrow", "\\rightarrow"],
+        ["\\Darr", "\\leftrightarrows", "\\Rightarrow"],
+        ["\\dArr", "\\leftrightharpoons", "\\rightarrowtail"],
+        ["\\darr", "\\leftrightsquigarrow", "\\rightharpoondown"],
+        ["\\dashleftarrow", "\\Lleftarrow", "\\rightharpoonup"],
+        ["\\dashrightarrow", "\\longleftarrow", "\\rightleftarrows"],
+        ["\\downarrow", "\\Longleftarrow", "\\rightleftharpoons"],
+        ["\\Downarrow", "\\longleftrightarrow", "\\rightrightarrows"],
+        ["\\downdownarrows", "\\Longleftrightarrow", "\\rightsquigarrow"],
+        ["\\downharpoonleft", "\\longmapsto", "\\Rrightarrow"],
+        ["\\downharpoonright", "\\longrightarrow", "\\Rsh"],
+        ["\\gets", "\\Longrightarrow", "\\searrow"],
+        ["\\Harr", "\\looparrowleft", "\\swarrow"],
+        ["\\hArr", "\\looparrowright", "\\to"],
+        ["\\harr", "\\Lrarr", "\\twoheadleftarrow"],
+        ["\\hookleftarrow", "\\lrArr", "\\twoheadrightarrow"],
+        ["\\hookrightarrow", "\\lrarr", "\\Uarr"],
+        ["\\iff", "\\Lsh", "\\uArr"],
+        ["\\impliedby", "\\mapsto", "\\uarr"],
+        ["\\implies", "\\nearrow", "\\uparrow"],
+        ["\\Larr", "\\nleftarrow", "\\Uparrow"],
+        ["\\lArr", "\\nLeftarrow", "\\updownarrow"],
+        ["\\larr", "\\nleftrightarrow", "\\Updownarrow"],
+        ["\\leadsto", "\\nLeftrightarrow", "\\upharpoonleft"],
+        ["\\leftarrow", "\\nrightarrow", "\\upharpoonright"],
+        ["\\Leftarrow", "\\nRightarrow", "\\upuparrows"],
+        ["\\leftarrowtail", "\\nwarrow"],
+        ["\\leftharpoondown", "\\Rarr"],
+    ];
+
+    const extensibleArrows = [
+        ["\\xleftarrow{abc}", "\\xrightarrow[under]{over}"],
+        ["\\xLeftarrow{abc}", "\\xRightarrow{abc}"],
+        ["\\xleftrightarrow{abc}", "\\xLeftrightarrow{abc}"],
+        ["\\xhookleftarrow{abc}", "\\xhookrightarrow{abc}"],
+        ["\\xtwoheadleftarrow{abc}", "\\xtwoheadrightarrow{abc}"],
+        ["\\xleftharpoonup{abc}", "\\xrightharpoonup{abc}"],
+        ["\\xleftharpoondown{abc}", "\\xrightharpoondown{abc}"],
+        ["\\xleftrightharpoons{abc}", "\\xrightleftharpoons{abc}"],
+        ["\\xtofrom{abc}", "\\xmapsto{abc}"],
+        ["\\xlongequal{abc}"],
+    ];
+
+    const symbols = [
+        ["% comment", "\\dots", "\\KaTeX"],
+        ["\\%", "\\cdots", "\\LaTeX"],
+        ["\\#", "\\ddots", "\\TeX"],
+        ["\\&", "\\ldots", "\\nabla"],
+        ["\\_", "\\vdots", "\\infty"],
+        ["\\text{\\textunderscore}", "\\dotsb", "\\infin"],
+        ["\\text{--}", "\\dotsc", "\\checkmark"],
+        ["\\text{\\textendash}", "\\dotsi", "\\dag"],
+        ["\\text{---}", "\\dotsm", "\\dagger"],
+        ["\\text{\\textemdash}", "\\dotso", "\\text{\\textdagger}"],
+        ["\\text{\\textasciitilde}", "\\sdot", "\\ddag"],
+        ["\\text{\\textasciicircum}", "\\mathellipsis", "\\ddagger"],
+        ["`", "\\text{\\textellipsis}", "\\text{\\textdaggerdbl}"],
+        ["\\text{\\textquoteleft}", "\\Box", "\\Dagger"],
+        ["\\lq", "\\square", "\\angle"],
+        ["\\text{\\textquoteright}", "\\blacksquare", "\\measuredangle"],
+        ["\\rq", "\\triangle", "\\sphericalangle"],
+        ["\\text{\\textquotedblleft}", "\\triangledown", "\\top"],
+        ['"', "\\triangleleft", "\\bot"],
+        ["\\text{\\textquotedblright}", "\\triangleright", "\\$"],
+        ["\\colon", "\\bigtriangledown", "\\text{\\textdollar}"],
+        ["\\backprime", "\\bigtriangleup", "\\pounds"],
+        ["\\prime", "\\blacktriangle", "\\mathsterling"],
+        ["\\text{\\textless}", "\\blacktriangledown", "\\text{\\textsterling}"],
+        ["\\text{\\textgreater}", "\\blacktriangleleft", "\\yen"],
+        ["\\text{\\textbar}", "\\blacktriangleright", "\\surd"],
+        ["\\text{\\textbardbl}", "\\diamond", "\\degree"],
+        ["\\text{\\textbraceleft}", "\\Diamond", "\\text{\\textdegree}"],
+        ["\\text{\\textbraceright}", "\\lozenge", "\\mho"],
+        ["\\\\ \\text{\\textbackslash}", "\\blacklozenge", "\\diagdown"],
+        ["\\text{\\P} or \\P", "\\star", "\\diagup"],
+        ["\\text{\\S} or \\S", "\\bigstar", "\\flat"],
+        ["\\text{\\sect}", "\\clubsuit", "\\natural"],
+        ["\\copyright", "\\clubs", "\\sharp"],
+        ["\\circledR", "\\diamondsuit", "\\heartsuit"],
+        ["\\text{\\textregistered}", "\\diamonds", "\\hearts"],
+        ["\\circledS", "\\spadesuit", "\\spades"],
+        ["\\text{\\textcircled a}", "\\maltese", "\\minuso"],
+    ];
+
+    const font = [
+        ["\\mathrm{Ab0}", "\\mathbf{Ab0}", "\\mathsf{Ab0}"],
+        ["\\mathnormal{Ab0}", "\\textbf{Ab0}", "\\textsf{Ab0}"],
+        ["\\textrm{Ab0}", "\\bf Ab0", "\\sf Ab0"],
+        ["\\rm Ab0", "\\bold{Ab0}", "\\mathsfit{Ab0}"],
+        ["\\textnormal{Ab0}", "\\boldsymbol{Ab0}", "\\Bbb{AB}"],
+        ["\\text{Ab0}", "\\bm{Ab0}", "\\mathbb{AB}"],
+        ["\\textup{Ab0}", "\\textmd{Ab0}", "\\frak{Ab0}"],
+        ["\\mathit{Ab0}", "\\mathtt{Ab0}", "\\mathfrak{Ab0}"],
+        ["\\textit{Ab0}", "\\texttt{Ab0}", "\\mathcal{AB0}"],
+        ["\\it Ab0", "\\tt Ab0", "\\cal AB0"],
+        ["\\emph{Ab0}", "", "\\mathscr{AB}"],
+    ];
+
+    const size = [
+        ["\\Huge AB", "\\normalsize AB"],
+        ["\\huge AB", "\\small AB"],
+        ["\\LARGE AB", "\\footnotesize AB"],
+        ["\\Large AB", "\\scriptsize AB"],
+        ["\\large AB", "\\tiny AB"],
+    ];
+
+    const style = [
+        ["\\displaystyle\\sum_{i=1}^n"],
+        ["\\textstyle\\sum_{i=1}^n"],
+        ["\\scriptstyle x"],
+        ["\\scriptscriptstyle x"],
+        ["\\lim\\limits_x"],
+        ["\\lim\\nolimits_x"],
+        ["\\verb!x^2!"],
+    ];
 </script>
 
 <p style="margin-top:0">
-    <span><a href="https://katex.org/docs/supported">KaTex Supported Functions</a></span>
+    Content below copied from <a href="https://katex.org/docs/supported">KaTeX Supported Functions</a>
 </p>
+<details>
+    <summary>Accents</summary>
+    <KaTeXReferenceTable functionsArr={accents}></KaTeXReferenceTable>
+    <b>Accent functions inside \\text&lbrace;...&rbrace;</b>
+    <KaTeXReferenceTable functionsArr={accentsInside}></KaTeXReferenceTable>
+</details>
+
+<details>
+    <summary>Delimiters</summary>
+    <KaTeXReferenceTable functionsArr={delimiters}></KaTeXReferenceTable>
+    <p>
+        {@html katex.renderToString("\\left(\\frac{1}{2}\\right) \\qquad (\\frac{1}{2})", {
+            throwOnError: false,
+            displayMode: true,
+        })}
+        <code
+            >\left&lpar;\frac&lbrace;1&rbrace;&lbrace;2&rbrace;\right&rpar; \qquad
+            &lpar;\frac&lbrace;1&rbrace;&lbrace;2&rbrace;&rpar;</code
+        >
+    </p>
+    <p>
+        {@html katex.renderToString("( \\big( \\Big( \\bigg( \\Bigg(", { throwOnError: false, displayMode: true })}
+        <code>&lpar;\big&lpar; \Big&lpar; \bigg&lpar; \Bigg&lpar;</code>
+    </p>
+    <KaTeXReferenceTable functionsArr={delimiterSizing} noDraw={true}></KaTeXReferenceTable>
+</details>
+
+<details>
+    <summary>Environments</summary>
+    <KaTeXReferenceTable functionsArr={environments}></KaTeXReferenceTable>
+    <p>
+        The auto-render extension will render the following environments even if they are not inside math delimiters
+        such as <code>$$…$$</code>. They are display-mode only.
+    </p>
+    <KaTeXReferenceTable functionsArr={addEnviro}></KaTeXReferenceTable>
+    <b>Other KaTeX Environments</b>
+    <table>
+        <thead>
+            <tr>
+                <th>Environments</th>
+                <th>How they differ from those shown above</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>darray</code>, <code>dcases</code>, <code>drcases</code></td>
+                <td> … apply <code>displaystyle</code></td>
+            </tr>
+            <tr>
+                <td
+                    ><code>matrix*</code>, <code>pmatrix*</code>, <code>bmatrix*</code>, <code>Bmatrix*</code>,
+                    <code>vmatrix*</code>, <code>Vmatrix*</code>
+                </td>
+                <td
+                    >… take an optional argument to set column alignment, as in
+                    <code>\begin&lbrace;matrix&rbrace;&lbrack;r&rbrack;</code></td
+                >
+            </tr>
+            <tr>
+                <td
+                    ><code>equation*</code>, <code>gather*</code>
+                    <code>align*</code>, <code>alignat*</code></td
+                >
+                <td
+                    >… have no automatic numbering. Alternatively, you can use <code>\nonumber</code> or
+                    <code>\notag</code> to omit the numbering for a specific row of the equation.</td
+                >
+            </tr>
+            <tr>
+                <td><code>gathered</code>, <code>aligned</code>, <code>alignedat</code></td>
+                <td
+                    >… do not need to be in display mode. <br />… have no automatic numbering.<br /> … must be inside math
+                    delimiters in order to be rendered by the auto-render extension.</td
+                >
+            </tr>
+        </tbody>
+    </table>
+    <p>
+        Acceptable line separators include: <code>\\</code>, <code>\cr</code>, <code>\\&lbrack;distance&rbrack;</code>,
+        and <code>\cr&lbrack;distance&rbrack;</code>. <em>Distance</em> can be written with any of the KaTeX units.
+    </p>
+    <p>
+        The <code>&lbrace;array&rbrace;</code> environment supports <code>|</code> and <code>:</code> vertical separators.
+    </p>
+    <p>
+        The <code>&lbrace;array&rbrace;</code> environment does not yet support <code>\cline</code> or
+        <code>\multicolumn</code>.
+    </p>
+    <p>
+        <code>\tag</code> can be applied to individual rows of top-level environments (<code>align</code>,
+        <code>align</code>*, <code>alignat</code>, <code>alignat*</code>, <code>gather</code>, <code>gather*</code>).
+    </p>
+</details>
+
+<details>
+    <summary>Letters and Unicode</summary>
+    <b>Greek Letters</b>
+    <p>
+        Direct Input: ABΓΔEZHΘIKΛMNΞOΠPΣTΥΦXΨΩABΓΔEZHΘIKΛMNΞOΠPΣTΥΦXΨΩ
+        αβγδϵζηθικλμνξoπρστυϕχψωεϑϖϱςφϝαβγδϵζηθικλμνξoπρστυϕχψωεϑϖϱςφϝ
+    </p>
+    <KaTeXReferenceTable functionsArr={greek}></KaTeXReferenceTable>
+    <b>Other Letters</b>
+    <KaTeXReferenceTable functionsArr={otherLetters}></KaTeXReferenceTable>
+    <p>Direct Input: ∂∇ℑℲℵℶℷℸ⅁ℏð−∗∂∇ℑℲℵℶℷℸ⅁ℏð−∗ ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜÝÞßàáâãäåçèéêëìíîïðñòóôöùúûüýþÿ</p>
+    <p>₊₋₌₍₎₀₁₂₃₄₅₆₇₈₉ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜᵤᵥₓᵦᵧᵨᵩᵪ⁺⁻⁼⁽⁾⁰¹²³⁴⁵⁶⁷⁸⁹ᵃᵇᶜᵈᵉᵍʰⁱʲᵏˡᵐⁿᵒᵖʳˢᵗᵘʷˣʸᶻᵛᵝᵞᵟᵠᵡ</p>
+    <p>
+        Math-mode Unicode (sub|super)script characters will render as if you had written regular characters in a
+        subscript or superscript. For instance, <code>A²⁺³</code> will render the same as
+        <code>A^&lbrace;2+3&rbrace;</code>.
+    </p>
+    <b>Unicode</b>
+    <p>
+        Any character can be written with the <code>\char</code> function and the Unicode code in hex. For example
+        <code>\char"263a</code> will render as ☺.
+    </p>
+</details>
+
+<details>
+    <summary>Layout</summary>
+    <b>Annotation</b>
+    <KaTeXReferenceTable functionsArr={annotation}></KaTeXReferenceTable>
+    <b>Line Breaks</b>
+    <p>
+        KaTeX 0.10.0+ will insert automatic line breaks in inline math after relations or binary operators such as “=”
+        or “+”. These can be suppressed by <code>\nobreak</code> or by placing math inside a pair of braces, as in
+        <code>&lbrace;F=ma&rbrace;</code>. <code>\allowbreak</code> will allow automatic line breaks at locations other than
+        relations or operators.
+    </p>
+    <p>Hard line breaks are <code>\\</code> and <code>\newline</code>.</p>
+    <p>
+        In display math, KaTeX does not insert automatic line breaks. It ignores display math hard line breaks when
+        rendering option <code>strict: true</code>.
+    </p>
+    <b>Vertical Layout</b>
+    <KaTeXReferenceTable functionsArr={vertLayout}></KaTeXReferenceTable>
+    <p>
+        <code>\raisebox</code> and <code>\hbox</code> put their argument into text mode. To raise math, nest
+        <code>$…$</code> delimiters inside the argument as shown above.
+    </p>
+    <p>
+        <code>\vcenter</code> can be written without an <code>\hbox</code> if the strict rendering option is false. In
+        that case, omit the nested <code>$…$</code> delimiters.
+    </p>
+    <b>Overlap and Spacing</b>
+    <KaTeXReferenceTable functionsArr={overlap}></KaTeXReferenceTable>
+    <p>
+        KaTeX also supports <code>\llap</code>, <code>\rlap</code>, and <code>\clap</code>, but they will take only
+        text, not math, as arguments.
+    </p>
+    <b>Spacing</b>
+    <table>
+        <thead><tr><th>Function</th><th>Produces</th><th>Function</th><th>Produces</th></tr></thead>
+        <tbody>
+            <tr
+                ><td><code>\,</code></td><td>³∕₁₈ em space</td><td><code>\kern&lbrace;distance&rbrace;</code></td><td
+                    >space, width = distance</td
+                ></tr
+            ><tr> </tr><tr
+                ><td><code>\thinspace</code></td><td>³∕₁₈ em space</td><td
+                    ><code>\mkern&lbrace;distance&rbrace;</code></td
+                ><td>space, width = distance</td></tr
+            ><tr> </tr><tr
+                ><td><code>\&gt;</code></td><td>⁴∕₁₈ em space</td><td><code>\mskip&lbrace;distance&rbrace;</code></td
+                ><td>space, width = distance</td></tr
+            ><tr> </tr><tr
+                ><td><code>\:</code></td><td>⁴∕₁₈ em space</td><td><code>\hskip&lbrace;distance&rbrace;</code></td><td
+                    >space, width = distance</td
+                ></tr
+            ><tr> </tr><tr
+                ><td><code>\medspace</code></td><td>⁴∕₁₈ em space</td><td
+                    ><code>\hspace&lbrace;distance&rbrace;</code></td
+                ><td>space, width = distance</td></tr
+            ><tr> </tr><tr
+                ><td><code>\;</code></td><td>⁵∕₁₈ em space</td><td><code>\hspace*&lbrace;distance&rbrace;</code></td><td
+                    >space, width = distance</td
+                ></tr
+            ><tr> </tr><tr
+                ><td><code>\thickspace</code></td><td>⁵∕₁₈ em space</td><td
+                    ><code>\phantom&lbrace;content&rbrace;</code></td
+                ><td>space the width and height of content</td></tr
+            ><tr> </tr><tr
+                ><td><code>\enspace</code></td><td>½ em space</td><td><code>\hphantom&lbrace;content&rbrace;</code></td
+                ><td>space the width of content</td></tr
+            ><tr> </tr><tr
+                ><td><code>\quad</code></td><td>1 em space</td><td><code>\vphantom&lbrace;content&rbrace;</code></td><td
+                    >a strut the height of content</td
+                ></tr
+            ><tr> </tr><tr
+                ><td><code>\qquad</code></td><td>2 em space</td><td><code>\!</code></td><td>- ³∕₁₈ em space</td></tr
+            ><tr> </tr><tr
+                ><td><code>~</code></td><td>non-breaking space</td><td><code>\negthinspace</code></td><td>
+                    - ³∕₁₈ em space</td
+                ></tr
+            ><tr> </tr><tr
+                ><td><code>\<space></space></code></td><td>space</td><td><code>\negmedspace</code></td><td
+                    >- ⁴∕₁₈ em space</td
+                ></tr
+            ><tr> </tr><tr
+                ><td><code>\nobreakspace</code></td><td>non-breaking space</td><td><code>\negthickspace</code></td><td
+                    >- ⁵∕₁₈ em space</td
+                ></tr
+            ><tr> </tr><tr
+                ><td><code>\space</code></td><td>space</td><td><code>\mathstrut</code></td><td
+                    ><code>\vphantom&lbrace;&lpar;&rbrace;</code></td
+                ></tr
+            ><tr> </tr>
+        </tbody>
+    </table>
+    <p>
+        Notes:<br /><code>distance</code> will accept any of the KaTeX units.<br /><code>\kern</code>,
+        <code>\mkern</code>, <code>\mskip</code>, and <code>\hspace</code> accept unbraced distances, as in:
+        <code>\kern1em</code>.<br /><code>\mkern</code> and <code>\mskip</code> will not work in text mode and both will
+        write a console warning for any unit except <code>mu</code>.
+    </p>
+</details>
+
+<details>
+    <summary>Logic and Set Theory</summary>
+    <KaTeXReferenceTable functionsArr={lsTheory}></KaTeXReferenceTable>
+    <p>Direct Input: ∀∴∁∵∃∣∈∉∋⊂⊃∧∨↦→←↔¬∀∴∁∵∃∣∈∈/∋⊂⊃∧∨↦→←↔¬ ℂ ℍ ℕ ℙ ℚ ℝ</p>
+</details>
+
+<details>
+    <summary>Macros</summary>
+    <KaTeXReferenceTable functionsArr={macros}></KaTeXReferenceTable>
+    <p>
+        Macros can also be defined in settings.<br />Macros accept up to nine arguments: #1, #2, etc.<br />Macros
+        defined by <code>\gdef</code>, <code>\xdef</code>, <code>\global\def</code>, <code>\global\edef</code>,
+        <code>\global\let</code>, and <code>\global\futurelet</code> will persist between math expressions. (Exception:
+        macro persistence may be disabled. There are legitimate security reasons for that.)<br />KaTeX has no
+        <code>\par</code>, so all macros are long by default and <code>\long</code> will be ignored.<br />Available
+        functions include:<br /><code>\char</code> <code>\mathchoice</code> <code>\TextOrMath</code>
+        <code>\@ifstar</code> <code>\@ifnextchar</code> <code>\@firstoftwo</code>
+        <code>\@secondoftwo</code> <code>\relax</code> <code>\expandafter</code> <code>\noexpand</code><br />@ is a
+        valid character for commands, as if
+        <code>\makeatletter</code> were in effect.
+    </p>
+</details>
+
+<details>
+    <summary>Operators</summary>
+    <b>Big Operators</b>
+    <KaTeXReferenceTable functionsArr={operators}></KaTeXReferenceTable>
+    <p>Direct Input: ∫∬∭∮∏∐∑⋀⋁⋂⋃⨀⨁⨂⨄⨆∫∬∭∮∏∐∑⋀⋁⋂⋃⨀⨁⨂⨄⨆ ∯ ∰</p>
+    <b>Binary Operators</b>
+    <KaTeXReferenceTable functionsArr={binOps}></KaTeXReferenceTable>
+    <p>Direct Input: +−/∗⋅∘∙±×÷∓∔∧∨∩∪≀⊎⊓⊔⊕⊖⊗⊘⊙⊚⊛⊝◯∖+−/∗⋅∘∙±×÷∓∔∧∨∩∪≀⊎⊓⊔⊕⊖⊗⊘⊙⊚⊛⊝◯∖</p>
+    <b>Fractions and Binomials</b>
+    <KaTeXReferenceTable functionsArr={frac}></KaTeXReferenceTable>
+    <KaTeXReferenceTable functionsArr={binomials}></KaTeXReferenceTable>
+    <b>Math Operators</b>
+    <KaTeXReferenceTable functionsArr={mathOps}></KaTeXReferenceTable>
+    <p>Functions in the bottom six rows of this table can take <code>\limits</code>.</p>
+    <b>Square Root</b>
+    <KaTeXReferenceTable functionsArr={[["\\sqrt{x}"], ["\\sqrt[3]{x}"]]}></KaTeXReferenceTable>
+</details>
+
+<details>
+    <summary>Relations</summary>
+    <KaTeXReferenceTable functionsArr={relations}></KaTeXReferenceTable>
+    <p>
+        Direct Input: =&lt;&gt;:∈∋∝∼∽≂≃≅≈≊≍≎≏≐≑≒≓≖≗≜≡≤≥≦≧≫≬≳≷≺≻≼≽≾≿⊂⊃⊆⊇⊏⊐⊑⊒⊢⊣⊩⊪⊸⋈⋍⋐⋑⋔⋙⋛⋞⋟⌢⌣⩾⪆⪌⪕⪖⪯⪰⪷⪸⫅⫆≲⩽⪅≶⋚⪋⊥⊨⊶⊷ ≔ ≕ ⩴
+    </p>
+    <b>Negated Relations</b>
+    <p>{@html katex.renderToString("\\not =", { throwOnError: false, displayMode: true })}<code>\not =</code></p>
+    <KaTeXReferenceTable functionsArr={negRelations}></KaTeXReferenceTable>
+    <p>Direct Input: ∉∌∤∦≁≆≠≨≩≮≯≰≱⊀⊁⊈⊉⊊⊋⊬⊭⊮⊯⋠⋡⋦⋧⋨⋩⋬⋭⪇⪈⪉⪊⪵⪶⪹⪺⫋⫌∈/∋∤∦≁≆=≨≩≮≯≰≱⊀⊁⊈⊉⊊⊋⊬⊭⊮⊯⋠⋡⋦⋧⋨⋩⋬⋭⪇⪈⪉⪊⪵⪶⪹⪺⫋⫌</p>
+    <b>Arrows</b>
+    <KaTeXReferenceTable functionsArr={arrows}></KaTeXReferenceTable>
+    <p>
+        Direct Input:
+        ←↑→↓↔↕↖↗↘↙↚↛↞↠↢↣↦↩↪↫↬↭↮↰↱↶↷↺↻↼↽↾↾↿⇀⇁⇂⇃⇄⇆⇇⇈⇉⇊⇋⇌⇍⇎⇏⇐⇑⇒⇓⇔⇕⇚⇛⇝⇠⇢⟵⟶⟷⟸⟹⟺⟼←↑→↓↔↕↖↗↘↙↚↛↞↠↢↣↦↩↪↫↬↭↮↰↱↶↷↺↻↼↽↾↾↿⇀⇁⇂⇃⇄⇆⇇⇈⇉⇊⇋⇌⇍⇎⇏⇐⇑⇒⇓⇔⇕⇚⇛⇝⇠⇢⟵⟶⟷⟸⟹⟺⟼
+        ↽
+    </p>
+    <b>Extensible Arrows</b>
+    <KaTeXReferenceTable functionsArr={extensibleArrows}></KaTeXReferenceTable>
+    <p>
+        Extensible arrows all can take an optional argument in the same manner as <code
+            >\xrightarrow&lpar;under&rpar;&lbrace;over&rbrace;</code
+        >.
+    </p>
+</details>
+
+<details>
+    <summary>Special Notation</summary>
+    <b>Bra-ket Notation</b>
+    <KaTeXReferenceTable functionsArr={braketNotation}></KaTeXReferenceTable>
+</details>
+
+<details>
+    <summary>Style, Color, Size, and Font</summary>
+    <b>Class Assignment</b>
+    <p>
+        <code>\mathbin</code> <code>\mathclose</code> <code>\mathinner</code> <code>\mathop</code>
+        <code>\mathopen</code> <code>\mathord</code> <code>\mathpunct</code> <code>\mathrel</code>
+    </p>
+    <b>Color</b>
+    <p>
+        Note that <code>\color</code> acts like a switch. Other color functions expect the content to be a function argument
+    </p>
+    <KaTeXReferenceTable functionsArr={colors}></KaTeXReferenceTable>
+    <p>
+        Note that, as in LaTeX, <code>\colorbox</code> & <code>\fcolorbox</code> renders its third argument as text, so
+        you may want to switch back to math mode with <code>$</code> as in the examples above.
+    </p>
+    <p>
+        For color definition, KaTeX color functions will accept the standard HTML predefined color names. They will also
+        accept an RGB argument in CSS hexadecimal style. The "#" is optional before a six-digit specification.
+    </p>
+    <b>Font</b>
+    <KaTeXReferenceTable functionsArr={font}></KaTeXReferenceTable>
+    <p>
+        One can stack font family, font weight, and font shape by using the <code>\textXX</code> versions of the font
+        functions. So <code>\textsf&lbrace;\textbf&lbrace;H&rbrace;&rbrace;</code> will produce: {@html katex.renderToString(
+            "\\textsf{\\textbf{H}}",
+            { throwOnError: false, displayMode: true },
+        )}The other versions do not stack, e.g., <code>\mathsf&lbrace;\mathbf&lbrace;H&rbrace;&rbrace;</code> will
+        produce: {@html katex.renderToString("\\mathsf{\\mathbf{H}}", { throwOnError: false, displayMode: true })}
+    </p>
+    <p>
+        In cases where KaTeX fonts do not have a bold glyph, <code>\pmb</code> can simulate one. For example,
+        <code>\pmb&lbrace;\mu&rbrace;</code>
+        renders as : {@html katex.renderToString("\\pmb{\\mu}", { throwOnError: false, displayMode: true })}
+    </p>
+    <b>Size</b>
+    <KaTeXReferenceTable functionsArr={size}></KaTeXReferenceTable>
+    <b>Style</b>
+    <KaTeXReferenceTable functionsArr={style}></KaTeXReferenceTable>
+    <p>
+        <code>\text&lbrace;…&rbrace;</code> will accept nested <code>$…$</code> fragments and render them in math mode.
+    </p>
+</details>
+
+<details>
+    <summary>Symbols and Punctuation</summary>
+    <KaTeXReferenceTable functionsArr={symbols}></KaTeXReferenceTable>
+    <p>Direct Input: § ¶ £¥∇∞⋅∠∡∢♠♡♢♣♭♮♯✓…⋮⋯⋱!£¥∇∞⋅∠∡∢♠♡♢♣♭♮♯✓…⋮⋯⋱! ‼ ⦵</p>
+</details>
+
+<details>
+    <summary>Units</summary>
+    <p>
+        In KaTeX, units are proportioned as they are in TeX.<br />
+        KaTeX units are different than CSS units.
+    </p>
+    <table>
+        <thead>
+            <tr>
+                <td>KaTeX Unit</td>
+                <td>Value</td>
+                <td>KaTeX Unit</td>
+                <td>Value</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>em</td>
+                <td>CSS em</td>
+                <td>bp</td>
+                <td>1/72 inch x F x G</td>
+            </tr>
+            <tr>
+                <td>ex</td>
+                <td>CSS ex</td>
+                <td>pc</td>
+                <td>12 KaTeX pt</td>
+            </tr>
+            <tr>
+                <td>mu</td>
+                <td>1/18 CSS em</td>
+                <td>dd</td>
+                <td>1238/1157 KaTeX pt</td>
+            </tr>
+            <tr>
+                <td>pt</td>
+                <td>1/72.27 inch x F x G</td>
+                <td>cc</td>
+                <td>14856/1157 KaTeX pt</td>
+            </tr>
+            <tr>
+                <td>mm</td>
+                <td>1 mm x F x G</td>
+                <td>nd</td>
+                <td>685/642 KaTeX pt</td>
+            </tr>
+            <tr>
+                <td>cm</td>
+                <td>1 cm x F x G</td>
+                <td>nc</td>
+                <td>1370/107 KaTeX pt</td>
+            </tr>
+            <tr>
+                <td>in</td>
+                <td>1 inch x F x G</td>
+                <td>sp</td>
+                <td>1/65536 KaTeX pt</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>
+        where:<br />F = (font size of surrounding HTML text)/(10 pt)<br />G = 1.21 by default, because KaTeX font-size
+        is normally 1.21x the surrounding font size.
+    </p>
+    <p>The effect of style and size:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Unit</th>
+                <th>textstyle</th>
+                <th>scriptscript</th>
+                <th>huge</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>em or ex</td>
+                <td>{@html katex.renderToString("\\rule{1em}{1em}", { throwOnError: false, displayMode: true })}</td>
+                <td
+                    >{@html katex.renderToString("\\scriptscriptstyle\\rule{1em}{1em}", {
+                        throwOnError: false,
+                        displayMode: true,
+                    })}</td
+                >
+                <td
+                    >{@html katex.renderToString("\\huge\\rule{1em}{1em}", {
+                        throwOnError: false,
+                        displayMode: true,
+                    })}</td
+                >
+            </tr>
+            <tr>
+                <td>mu</td>
+                <td>{@html katex.renderToString("\\rule{18mu}{18mu}", { throwOnError: false, displayMode: true })}</td>
+                <td
+                    >{@html katex.renderToString("\\scriptscriptstyle\\rule{18mu}{18mu}", {
+                        throwOnError: false,
+                        displayMode: true,
+                    })}</td
+                >
+                <td
+                    >{@html katex.renderToString("\\huge\\rule{18mu}{18mu}", {
+                        throwOnError: false,
+                        displayMode: true,
+                    })}</td
+                >
+            </tr>
+            <tr>
+                <td>others</td>
+                <td>{@html katex.renderToString("\\rule{10pt}{10pt}", { throwOnError: false, displayMode: true })}</td>
+                <td
+                    >{@html katex.renderToString("\\scriptscriptstyle\\rule{10pt}{10pt}", {
+                        throwOnError: false,
+                        displayMode: true,
+                    })}</td
+                >
+                <td
+                    >{@html katex.renderToString("\\huge\\rule{10pt}{10pt}", {
+                        throwOnError: false,
+                        displayMode: true,
+                    })}</td
+                >
+            </tr>
+        </tbody>
+    </table>
+</details>
+
 <p>
     <span
         >Can't find the symbol you're looking for, but can draw it?<br /> Try
         <a href="https://detexify.kirelabs.org/classify.html">Detexify</a></span
     >
 </p>
-
-<details>
-    <summary>Accents</summary>
-    <table>
-        <tbody>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><msup
-                                                ><mi>a</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo
-                                                ></msup
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex">a&#x27; </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.8019em"></span><span class="mord"
-                                        ><span class="mord mathnormal">a</span><span class="msupsub"
-                                            ><span class="vlist-t"
-                                                ><span class="vlist-r"
-                                                    ><span class="vlist" style="height: 0.8019em"
-                                                        ><span style="top: -3.113em; margin-right: 0.05em"
-                                                            ><span class="pstrut" style="height: 2.7em"></span><span
-                                                                class="sizing reset-size6 size3 mtight"
-                                                                ><span class="mord mtight"
-                                                                    ><span class="mord mtight">′</span></span
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>a' </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>a</mi><mo>~</mo></mover></mrow><annotation
-                                            encoding="application/x-tex">\tilde&lbrace;a&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.6679em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6679em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal">a</span
-                                                        ></span
-                                                    ><span style="top: -3.35em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.25em"><span class="mord">~</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\tilde&lbrace;a&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>g</mi><mo>˚</mo></mover></mrow><annotation
-                                            encoding="application/x-tex">\mathring&lbrace;g&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.8889em; vertical-align: -0.1944em"
-                                    ></span><span class="mord accent"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6944em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal"
-                                                            style="margin-right: 0.03588em">g</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.3472em"><span class="mord">˚</span></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.1944em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\mathring&lbrace;g&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><msup
-                                                ><mi>a</mi><mrow
-                                                    ><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo
-                                                    ></mrow
-                                                ></msup
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex">a&#x27;&#x27;</annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.8019em"></span><span class="mord"
-                                        ><span class="mord mathnormal">a</span><span class="msupsub"
-                                            ><span class="vlist-t"
-                                                ><span class="vlist-r"
-                                                    ><span class="vlist" style="height: 0.8019em"
-                                                        ><span style="top: -3.113em; margin-right: 0.05em"
-                                                            ><span class="pstrut" style="height: 2.7em"></span><span
-                                                                class="sizing reset-size6 size3 mtight"
-                                                                ><span class="mord mtight"
-                                                                    ><span class="mord mtight">′′</span></span
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>a''</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>a</mi><mi>c</mi></mrow><mo stretchy="true">~</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\widetilde&lbrace;ac&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.7166em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.7166em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">a</span><span
-                                                                class="mord mathnormal">c</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.4306em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            style="height: 0.286em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="100%"
-                                                                height="0.286em"
-                                                                viewBox="0 0 1033 286"
-                                                                preserveAspectRatio="none"
-                                                            >
-                                                                <path
-                                                                    d="M344 55.266c-142 0-300.638 81.316-311.5 86.418
--8.01 3.762-22.5 10.91-23.5 5.562L1 120c-1-2-1-3-1-4 0-5 3-9 8-10l18.4-9C160.9
- 31.9 283 0 358 0c148 0 188 122 331 122s314-97 326-97c4 0 8 2 10 7l7 21.114
-c1 2.14 1 3.21 1 4.28 0 5.347-3 9.626-7 10.696l-22.3 12.622C852.6 158.372 751
- 181.476 676 181.476c-149 0-189-126.21-332-126.21z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\widetilde&lbrace;ac&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">⏠</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overgroup&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.0253em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 1.0253em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.6833em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.342em; min-width: 0.888em"
-                                                            ><span class="halfarrow-left" style="height: 0.342em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.342em"
-                                                                    viewBox="0 0 400000 342"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M400000 80
-H435C64 80 168.3 229.4 21 260c-5.9 1.2-18 0-18 0-2 0-3-1-3-3v-38C76 61 257 0
- 435 0h399565z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="halfarrow-right" style="height: 0.342em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.342em"
-                                                                    viewBox="0 0 400000 342"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M0 80h399565c371 0 266.7 149.4 414 180 5.9 1.2 18 0 18 0 2 0
- 3-1 3-3v-38c-76-158-257-219-435-219H0z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overgroup&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><msup
-                                                ><mi>a</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo
-                                                ></msup
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >a^&lbrace;\prime&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.8019em"></span><span class="mord"
-                                        ><span class="mord mathnormal">a</span><span class="msupsub"
-                                            ><span class="vlist-t"
-                                                ><span class="vlist-r"
-                                                    ><span class="vlist" style="height: 0.8019em"
-                                                        ><span style="top: -3.113em; margin-right: 0.05em"
-                                                            ><span class="pstrut" style="height: 2.7em"></span><span
-                                                                class="sizing reset-size6 size3 mtight"
-                                                                ><span class="mord mtight"
-                                                                    ><span class="mord mtight">′</span></span
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>a^&lbrace;\prime&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">~</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\utilde&lbrace;AB&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.0893em; vertical-align: -0.406em"></span><span
-                                        class="mord accentunder"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span class="svg-align" style="top: -2.594em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            style="height: 0.286em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="100%"
-                                                                height="0.286em"
-                                                                viewBox="0 0 1033 286"
-                                                                preserveAspectRatio="none"
-                                                            >
-                                                                <path
-                                                                    d="M344 55.266c-142 0-300.638 81.316-311.5 86.418
--8.01 3.762-22.5 10.91-23.5 5.562L1 120c-1-2-1-3-1-4 0-5 3-9 8-10l18.4-9C160.9
- 31.9 283 0 358 0c148 0 188 122 331 122s314-97 326-97c4 0 8 2 10 7l7 21.114
-c1 2.14 1 3.21 1 4.28 0 5.347-3 9.626-7 10.696l-22.3 12.622C852.6 158.372 751
- 181.476 676 181.476c-149 0-189-126.21-332-126.21z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.406em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\utilde&lbrace;AB&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">⏡</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\undergroup&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.0253em; vertical-align: -0.342em"></span><span
-                                        class="mord accentunder"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span class="svg-align" style="top: -2.658em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.342em; min-width: 0.888em"
-                                                            ><span class="halfarrow-left" style="height: 0.342em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.342em"
-                                                                    viewBox="0 0 400000 342"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M400000 262
-H435C64 262 168.3 112.6 21 82c-5.9-1.2-18 0-18 0-2 0-3 1-3 3v38c76 158 257 219
- 435 219h399565z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="halfarrow-right" style="height: 0.342em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.342em"
-                                                                    viewBox="0 0 400000 342"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M0 262h399565c371 0 266.7-149.4 414-180 5.9-1.2 18 0 18
- 0 2 0 3 1 3 3v38c-76 158-257 219-435 219H0z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.342em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\undergroup&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>a</mi><mo>ˊ</mo></mover></mrow><annotation
-                                            encoding="application/x-tex">\acute&lbrace;a&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.6944em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6944em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal">a</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.25em"><span class="mord">ˊ</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\acute&lbrace;a&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>F</mi><mo>⃗</mo></mover></mrow><annotation
-                                            encoding="application/x-tex"
-                                            >\vec&lbrace;F&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.9663em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.9663em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal"
-                                                            style="margin-right: 0.13889em">F</span
-                                                        ></span
-                                                    ><span style="top: -3.2523em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.1522em"
-                                                            ><span
-                                                                class="overlay"
-                                                                style="height: 0.714em; width: 0.471em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="0.471em"
-                                                                    height="0.714em"
-                                                                    style="width: 0.471em"
-                                                                    viewBox="0 0 471 714"
-                                                                    preserveAspectRatio="xMinYMin"
-                                                                >
-                                                                    <path
-                                                                        d="M377 20c0-5.333 1.833-10 5.5-14S391 0 397 0c4.667 0 8.667 1.667 12 5
-3.333 2.667 6.667 9 10 19 6.667 24.667 20.333 43.667 41 57 7.333 4.667 11
-10.667 11 18 0 6-1 10-3 12s-6.667 5-14 9c-28.667 14.667-53.667 35.667-75 63
--1.333 1.333-3.167 3.5-5.5 6.5s-4 4.833-5 5.5c-1 .667-2.5 1.333-4.5 2s-4.333 1
--7 1c-4.667 0-9.167-1.833-13.5-5.5S337 184 337 178c0-12.667 15.667-32.333 47-59
-H213l-171-1c-8.667-6-13-12.333-13-19 0-4.667 4.333-11.333 13-20h359
-c-16-25.333-24-45-24-59z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\vec&lbrace;F&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">⇒</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\Overrightarrow&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2433em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 1.2433em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.6833em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="hide-tail"
-                                                            style="height: 0.56em; min-width: 0.888em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="400em"
-                                                                height="0.56em"
-                                                                viewBox="0 0 400000 560"
-                                                                preserveAspectRatio="xMaxYMin slice"
-                                                            >
-                                                                <path
-                                                                    d="M399738 392l
--10 10c-34 36-62.7 77-86 123-3.3 8-5 13.3-5 16 0 5.3 6.7 8 20 8 7.3 0 12.2-.5
- 14.5-1.5 2.3-1 4.8-4.5 7.5-10.5 49.3-97.3 121.7-169.3 217-216 28-14 57.3-25 88
--33 6.7-2 11-3.8 13-5.5 2-1.7 3-4.2 3-7.5s-1-5.8-3-7.5c-2-1.7-6.3-3.5-13-5.5-68
--17.3-128.2-47.8-180.5-91.5-52.3-43.7-93.8-96.2-124.5-157.5-9.3-8-15.3-12.3-18
--13h-6c-12 .7-18 4-18 10 0 2 1.7 7 5 15 23.3 46 52 87 86 123l10 10H0v40h399782
-c-328 0 0 0 0 0l10 8c26.7 20 65.7 43 117 69-2.7 2-6 3.7-10 5-36.7 16-72.3 37.3
--107 64l-10 8H0v40zM0 157v40h399730v-40zm0 194v40h399730v-40z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\Overrightarrow&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover></mrow><annotation
-                                            encoding="application/x-tex"
-                                            >\bar&lbrace;y&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.7622em; vertical-align: -0.1944em"
-                                    ></span><span class="mord accent"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.5678em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal"
-                                                            style="margin-right: 0.03588em">y</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.1944em"><span class="mord">ˉ</span></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.1944em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\bar&lbrace;y&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">←</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overleftarrow&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 1.2053em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.6833em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="hide-tail"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="400em"
-                                                                height="0.522em"
-                                                                viewBox="0 0 400000 522"
-                                                                preserveAspectRatio="xMinYMin slice"
-                                                            >
-                                                                <path
-                                                                    d="M400000 241H110l3-3c68.7-52.7 113.7-120
- 135-202 4-14.7 6-23 6-25 0-7.3-7-11-21-11-8 0-13.2.8-15.5 2.5-2.3 1.7-4.2 5.8
--5.5 12.5-1.3 4.7-2.7 10.3-4 17-12 48.7-34.8 92-68.5 130S65.3 228.3 18 247
-c-10 4-16 7.7-18 11 0 8.7 6 14.3 18 17 47.3 18.7 87.8 47 121.5 85S196 441.3 208
- 490c.7 2 1.3 5 2 9s1.2 6.7 1.5 8c.3 1.3 1 3.3 2 6s2.2 4.5 3.5 5.5c1.3 1 3.3
- 1.8 6 2.5s6 1 10 1c14 0 21-3.7 21-11 0-2-2-10.3-6-25-20-79.3-65-146.7-135-202
- l-3-3h399890zM100 241v40h399900v-40z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overleftarrow&lbrace;AB&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">→</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overrightarrow&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 1.2053em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.6833em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="hide-tail"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="400em"
-                                                                height="0.522em"
-                                                                viewBox="0 0 400000 522"
-                                                                preserveAspectRatio="xMaxYMin slice"
-                                                            >
-                                                                <path
-                                                                    d="M0 241v40h399891c-47.3 35.3-84 78-110 128
--16.7 32-27.7 63.7-33 95 0 1.3-.2 2.7-.5 4-.3 1.3-.5 2.3-.5 3 0 7.3 6.7 11 20
- 11 8 0 13.2-.8 15.5-2.5 2.3-1.7 4.2-5.5 5.5-11.5 2-13.3 5.7-27 11-41 14.7-44.7
- 39-84.5 73-119.5s73.7-60.2 119-75.5c6-2 9-5.7 9-11s-3-9-9-11c-45.3-15.3-85
--40.5-119-75.5s-58.3-74.8-73-119.5c-4.7-14-8.3-27.3-11-40-1.3-6.7-3.2-10.8-5.5
--12.5-2.3-1.7-7.5-2.5-15.5-2.5-14 0-21 3.7-21 11 0 2 2 10.3 6 25 20.7 83.3 67
- 151.7 139 205zm0 0v40h399900v-40z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overrightarrow&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>a</mi><mo>˘</mo></mover></mrow><annotation
-                                            encoding="application/x-tex">\breve&lbrace;a&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.6944em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6944em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal">a</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.25em"><span class="mord">˘</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\breve&lbrace;a&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">←</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\underleftarrow&lbrace;AB&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em; vertical-align: -0.522em"></span><span
-                                        class="mord accentunder"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span class="svg-align" style="top: -2.478em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="hide-tail"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="400em"
-                                                                height="0.522em"
-                                                                viewBox="0 0 400000 522"
-                                                                preserveAspectRatio="xMinYMin slice"
-                                                            >
-                                                                <path
-                                                                    d="M400000 241H110l3-3c68.7-52.7 113.7-120
- 135-202 4-14.7 6-23 6-25 0-7.3-7-11-21-11-8 0-13.2.8-15.5 2.5-2.3 1.7-4.2 5.8
--5.5 12.5-1.3 4.7-2.7 10.3-4 17-12 48.7-34.8 92-68.5 130S65.3 228.3 18 247
-c-10 4-16 7.7-18 11 0 8.7 6 14.3 18 17 47.3 18.7 87.8 47 121.5 85S196 441.3 208
- 490c.7 2 1.3 5 2 9s1.2 6.7 1.5 8c.3 1.3 1 3.3 2 6s2.2 4.5 3.5 5.5c1.3 1 3.3
- 1.8 6 2.5s6 1 10 1c14 0 21-3.7 21-11 0-2-2-10.3-6-25-20-79.3-65-146.7-135-202
- l-3-3h399890zM100 241v40h399900v-40z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.522em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underleftarrow&lbrace;AB&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">→</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\underrightarrow&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em; vertical-align: -0.522em"></span><span
-                                        class="mord accentunder"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span class="svg-align" style="top: -2.478em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="hide-tail"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="400em"
-                                                                height="0.522em"
-                                                                viewBox="0 0 400000 522"
-                                                                preserveAspectRatio="xMaxYMin slice"
-                                                            >
-                                                                <path
-                                                                    d="M0 241v40h399891c-47.3 35.3-84 78-110 128
--16.7 32-27.7 63.7-33 95 0 1.3-.2 2.7-.5 4-.3 1.3-.5 2.3-.5 3 0 7.3 6.7 11 20
- 11 8 0 13.2-.8 15.5-2.5 2.3-1.7 4.2-5.5 5.5-11.5 2-13.3 5.7-27 11-41 14.7-44.7
- 39-84.5 73-119.5s73.7-60.2 119-75.5c6-2 9-5.7 9-11s-3-9-9-11c-45.3-15.3-85
--40.5-119-75.5s-58.3-74.8-73-119.5c-4.7-14-8.3-27.3-11-40-1.3-6.7-3.2-10.8-5.5
--12.5-2.3-1.7-7.5-2.5-15.5-2.5-14 0-21 3.7-21 11 0 2 2 10.3 6 25 20.7 83.3 67
- 151.7 139 205zm0 0v40h399900v-40z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.522em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underrightarrow&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>a</mi><mo>ˇ</mo></mover></mrow><annotation
-                                            encoding="application/x-tex">\check&lbrace;a&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.6285em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6285em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal">a</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.25em"><span class="mord">ˇ</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\check&lbrace;a&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>a</mi><mi>c</mi></mrow><mo stretchy="true">↼</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overleftharpoon&lbrace;ac&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.9526em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.9526em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">a</span><span
-                                                                class="mord mathnormal">c</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.4306em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="hide-tail"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="400em"
-                                                                height="0.522em"
-                                                                viewBox="0 0 400000 522"
-                                                                preserveAspectRatio="xMinYMin slice"
-                                                            >
-                                                                <path
-                                                                    d="M0 267c.7 5.3 3 10 7 14h399993v-40H93c3.3
--3.3 10.2-9.5 20.5-18.5s17.8-15.8 22.5-20.5c50.7-52 88-110.3 112-175 4-11.3 5
--18.3 3-21-1.3-4-7.3-6-18-6-8 0-13 .7-15 2s-4.7 6.7-8 16c-42 98.7-107.3 174.7
--196 228-6.7 4.7-10.7 8-12 10-1.3 2-2 5.7-2 11zm100-26v40h399900v-40z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overleftharpoon&lbrace;ac&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>a</mi><mi>c</mi></mrow><mo stretchy="true">⇀</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overrightharpoon&lbrace;ac&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.9526em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.9526em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">a</span><span
-                                                                class="mord mathnormal">c</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.4306em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="hide-tail"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="400em"
-                                                                height="0.522em"
-                                                                viewBox="0 0 400000 522"
-                                                                preserveAspectRatio="xMaxYMin slice"
-                                                            >
-                                                                <path
-                                                                    d="M0 241v40h399993c4.7-4.7 7-9.3 7-14 0-9.3
--3.7-15.3-11-18-92.7-56.7-159-133.7-199-231-3.3-9.3-6-14.7-8-16-2-1.3-7-2-15-2
--10.7 0-16.7 2-18 6-2 2.7-1 9.7 3 21 15.3 42 36.7 81.8 64 119.5 27.3 37.7 58
- 69.2 92 94.5zm0 0v40h399900v-40z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overrightharpoon&lbrace;ac&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>a</mi><mo>˙</mo></mover></mrow><annotation
-                                            encoding="application/x-tex"
-                                            >\dot&lbrace;a&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.6679em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6679em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal">a</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.1389em"><span class="mord">˙</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\dot&lbrace;a&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">↔</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overleftrightarrow&lbrace;AB&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 1.2053em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.6833em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><span class="halfarrow-left" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M400000 241H110l3-3c68.7-52.7 113.7-120
- 135-202 4-14.7 6-23 6-25 0-7.3-7-11-21-11-8 0-13.2.8-15.5 2.5-2.3 1.7-4.2 5.8
--5.5 12.5-1.3 4.7-2.7 10.3-4 17-12 48.7-34.8 92-68.5 130S65.3 228.3 18 247
-c-10 4-16 7.7-18 11 0 8.7 6 14.3 18 17 47.3 18.7 87.8 47 121.5 85S196 441.3 208
- 490c.7 2 1.3 5 2 9s1.2 6.7 1.5 8c.3 1.3 1 3.3 2 6s2.2 4.5 3.5 5.5c1.3 1 3.3
- 1.8 6 2.5s6 1 10 1c14 0 21-3.7 21-11 0-2-2-10.3-6-25-20-79.3-65-146.7-135-202
- l-3-3h399890zM100 241v40h399900v-40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="halfarrow-right" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M0 241v40h399891c-47.3 35.3-84 78-110 128
--16.7 32-27.7 63.7-33 95 0 1.3-.2 2.7-.5 4-.3 1.3-.5 2.3-.5 3 0 7.3 6.7 11 20
- 11 8 0 13.2-.8 15.5-2.5 2.3-1.7 4.2-5.5 5.5-11.5 2-13.3 5.7-27 11-41 14.7-44.7
- 39-84.5 73-119.5s73.7-60.2 119-75.5c6-2 9-5.7 9-11s-3-9-9-11c-45.3-15.3-85
--40.5-119-75.5s-58.3-74.8-73-119.5c-4.7-14-8.3-27.3-11-40-1.3-6.7-3.2-10.8-5.5
--12.5-2.3-1.7-7.5-2.5-15.5-2.5-14 0-21 3.7-21 11 0 2 2 10.3 6 25 20.7 83.3 67
- 151.7 139 205zm0 0v40h399900v-40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overleftrightarrow&lbrace;AB&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">⏞</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overbrace&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.3313em"></span><span class="mord mover"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 1.3313em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.7833em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.548em; min-width: 1.6em"
-                                                            ><span class="brace-left" style="height: 0.548em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.548em"
-                                                                    viewBox="0 0 400000 548"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M6 548l-6-6v-35l6-11c56-104 135.3-181.3 238-232 57.3-28.7 117
--45 179-50h399577v120H403c-43.3 7-81 15-113 26-100.7 33-179.7 91-237 174-2.7
- 5-6 9-10 13-.7 1-7.3 1-20 1H6z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="brace-center" style="height: 0.548em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.548em"
-                                                                    viewBox="0 0 400000 548"
-                                                                    preserveAspectRatio="xMidYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M200428 334
-c-100.7-8.3-195.3-44-280-108-55.3-42-101.7-93-139-153l-9-14c-2.7 4-5.7 8.7-9 14
--53.3 86.7-123.7 153-211 199-66.7 36-137.3 56.3-212 62H0V214h199568c178.3-11.7
- 311.7-78.3 403-201 6-8 9.7-12 11-12 .7-.7 6.7-1 18-1s17.3.3 18 1c1.3 0 5 4 11
- 12 44.7 59.3 101.3 106.3 170 141s145.3 54.3 229 60h199572v120z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="brace-right" style="height: 0.548em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.548em"
-                                                                    viewBox="0 0 400000 548"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M400000 542l
--6 6h-17c-12.7 0-19.3-.3-20-1-4-4-7.3-8.3-10-13-35.3-51.3-80.8-93.8-136.5-127.5
-s-117.2-55.8-184.5-66.5c-.7 0-2-.3-4-1-18.7-2.7-76-4.3-172-5H0V214h399571l6 1
-c124.7 8 235 61.7 331 161 31.3 33.3 59.7 72.7 85 118l7 13v35z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overbrace&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>a</mi><mo>¨</mo></mover></mrow><annotation
-                                            encoding="application/x-tex"
-                                            >\ddot&lbrace;a&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.6679em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6679em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal">a</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.25em"><span class="mord">¨</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\ddot&lbrace;a&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">↔</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\underleftrightarrow&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em; vertical-align: -0.522em"></span><span
-                                        class="mord accentunder"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span class="svg-align" style="top: -2.478em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><span class="halfarrow-left" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M400000 241H110l3-3c68.7-52.7 113.7-120
- 135-202 4-14.7 6-23 6-25 0-7.3-7-11-21-11-8 0-13.2.8-15.5 2.5-2.3 1.7-4.2 5.8
--5.5 12.5-1.3 4.7-2.7 10.3-4 17-12 48.7-34.8 92-68.5 130S65.3 228.3 18 247
-c-10 4-16 7.7-18 11 0 8.7 6 14.3 18 17 47.3 18.7 87.8 47 121.5 85S196 441.3 208
- 490c.7 2 1.3 5 2 9s1.2 6.7 1.5 8c.3 1.3 1 3.3 2 6s2.2 4.5 3.5 5.5c1.3 1 3.3
- 1.8 6 2.5s6 1 10 1c14 0 21-3.7 21-11 0-2-2-10.3-6-25-20-79.3-65-146.7-135-202
- l-3-3h399890zM100 241v40h399900v-40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="halfarrow-right" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M0 241v40h399891c-47.3 35.3-84 78-110 128
--16.7 32-27.7 63.7-33 95 0 1.3-.2 2.7-.5 4-.3 1.3-.5 2.3-.5 3 0 7.3 6.7 11 20
- 11 8 0 13.2-.8 15.5-2.5 2.3-1.7 4.2-5.5 5.5-11.5 2-13.3 5.7-27 11-41 14.7-44.7
- 39-84.5 73-119.5s73.7-60.2 119-75.5c6-2 9-5.7 9-11s-3-9-9-11c-45.3-15.3-85
--40.5-119-75.5s-58.3-74.8-73-119.5c-4.7-14-8.3-27.3-11-40-1.3-6.7-3.2-10.8-5.5
--12.5-2.3-1.7-7.5-2.5-15.5-2.5-14 0-21 3.7-21 11 0 2 2 10.3 6 25 20.7 83.3 67
- 151.7 139 205zm0 0v40h399900v-40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.522em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underleftrightarrow&lbrace;AB&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">⏟</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\underbrace&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.3313em; vertical-align: -0.648em"></span><span
-                                        class="mord munder"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span class="svg-align" style="top: -2.352em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.548em; min-width: 1.6em"
-                                                            ><span class="brace-left" style="height: 0.548em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.548em"
-                                                                    viewBox="0 0 400000 548"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M0 6l6-6h17c12.688 0 19.313.3 20 1 4 4 7.313 8.3 10 13
- 35.313 51.3 80.813 93.8 136.5 127.5 55.688 33.7 117.188 55.8 184.5 66.5.688
- 0 2 .3 4 1 18.688 2.7 76 4.3 172 5h399450v120H429l-6-1c-124.688-8-235-61.7
--331-161C60.687 138.7 32.312 99.3 7 54L0 41V6z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="brace-center" style="height: 0.548em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.548em"
-                                                                    viewBox="0 0 400000 548"
-                                                                    preserveAspectRatio="xMidYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M199572 214
-c100.7 8.3 195.3 44 280 108 55.3 42 101.7 93 139 153l9 14c2.7-4 5.7-8.7 9-14
- 53.3-86.7 123.7-153 211-199 66.7-36 137.3-56.3 212-62h199568v120H200432c-178.3
- 11.7-311.7 78.3-403 201-6 8-9.7 12-11 12-.7.7-6.7 1-18 1s-17.3-.3-18-1c-1.3 0
--5-4-11-12-44.7-59.3-101.3-106.3-170-141s-145.3-54.3-229-60H0V214z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="brace-right" style="height: 0.548em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.548em"
-                                                                    viewBox="0 0 400000 548"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M399994 0l6 6v35l-6 11c-56 104-135.3 181.3-238 232-57.3
- 28.7-117 45-179 50H-300V214h399897c43.3-7 81-15 113-26 100.7-33 179.7-91 237
--174 2.7-5 6-9 10-13 .7-1 7.3-1 20-1h17z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.648em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underbrace&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mi
-                                                ><mover
-                                                    ><mo><mi>a</mi></mo><mpadded voffset="-0.1ex"
-                                                        ><mstyle scriptlevel="0" displaystyle="false"
-                                                            ><mstyle mathsize="1em"><mtext>...</mtext></mstyle></mstyle
-                                                        ></mpadded
-                                                    ></mover
-                                                ></mi
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex">\dddot&lbrace;a&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.793em"></span><span class="mord"
-                                        ><span class="mord"
-                                            ><span class="mop op-limits"
-                                                ><span class="vlist-t"
-                                                    ><span class="vlist-r"
-                                                        ><span class="vlist" style="height: 0.793em"
-                                                            ><span style="top: -3em"
-                                                                ><span class="pstrut" style="height: 3em"></span><span
-                                                                    ><span class="mop mathnormal">a</span></span
-                                                                ></span
-                                                            ><span style="top: -3.6306em; margin-left: 0em"
-                                                                ><span class="pstrut" style="height: 3em"></span><span
-                                                                    class="sizing reset-size6 size3 mtight"
-                                                                    ><span class="mord mtight"
-                                                                        ><span class="vlist-t vlist-t2"
-                                                                            ><span class="vlist-r"
-                                                                                ><span
-                                                                                    class="vlist"
-                                                                                    style="height: 0.0892em"
-                                                                                    ><span style="top: -2.9384em"
-                                                                                        ><span
-                                                                                            class="pstrut"
-                                                                                            style="height: 3em"
-                                                                                        ></span><span
-                                                                                            class="mord sizing reset-size3 size6"
-                                                                                            ><span class="mord"
-                                                                                                >...</span
-                                                                                            ></span
-                                                                                        ></span
-                                                                                    ></span
-                                                                                ><span class="vlist-s">​</span></span
-                                                                            ><span class="vlist-r"
-                                                                                ><span
-                                                                                    class="vlist"
-                                                                                    style="height: 0.0616em"
-                                                                                    ><span></span></span
-                                                                                ></span
-                                                                            ></span
-                                                                        ></span
-                                                                    ></span
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\dddot&lbrace;a&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">‾</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overline&lbrace;AB&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.8833em"></span><span class="mord overline"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.8833em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3.8033em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="overline-line"
-                                                            style="
-                                                    border-bottom-width: 0.04em;
-                                                "
-                                                        ></span></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overline&lbrace;AB&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mstyle mathcolor="#cc0000"><mtext>\overbracket</mtext></mstyle><mrow
-                                                ><mi>A</mi><mi>B</mi></mrow
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overbracket&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1em; vertical-align: -0.25em"></span><span
-                                        class="mord text"
-                                        style="color: #cc0000"
-                                        ><span class="mord" style="color: #cc0000">\overbracket</span></span
-                                    ><span class="mord"
-                                        ><span class="mord mathnormal">A</span><span
-                                            class="mord mathnormal"
-                                            style="margin-right: 0.05017em">B</span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overbracket&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mi
-                                                ><mover
-                                                    ><mo><mi>a</mi></mo><mpadded voffset="-0.1ex"
-                                                        ><mstyle scriptlevel="0" displaystyle="false"
-                                                            ><mstyle mathsize="1em"><mtext>....</mtext></mstyle></mstyle
-                                                        ></mpadded
-                                                    ></mover
-                                                ></mi
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex">\ddddot&lbrace;a&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.793em"></span><span class="mord"
-                                        ><span class="mord"
-                                            ><span class="mop op-limits"
-                                                ><span class="vlist-t"
-                                                    ><span class="vlist-r"
-                                                        ><span class="vlist" style="height: 0.793em"
-                                                            ><span style="top: -3em"
-                                                                ><span class="pstrut" style="height: 3em"></span><span
-                                                                    ><span class="mop mathnormal">a</span></span
-                                                                ></span
-                                                            ><span style="top: -3.6306em; margin-left: 0em"
-                                                                ><span class="pstrut" style="height: 3em"></span><span
-                                                                    class="sizing reset-size6 size3 mtight"
-                                                                    ><span class="mord mtight"
-                                                                        ><span class="vlist-t vlist-t2"
-                                                                            ><span class="vlist-r"
-                                                                                ><span
-                                                                                    class="vlist"
-                                                                                    style="height: 0.0892em"
-                                                                                    ><span style="top: -2.9384em"
-                                                                                        ><span
-                                                                                            class="pstrut"
-                                                                                            style="height: 3em"
-                                                                                        ></span><span
-                                                                                            class="mord sizing reset-size3 size6"
-                                                                                            ><span class="mord"
-                                                                                                >....</span
-                                                                                            ></span
-                                                                                        ></span
-                                                                                    ></span
-                                                                                ><span class="vlist-s">​</span></span
-                                                                            ><span class="vlist-r"
-                                                                                ><span
-                                                                                    class="vlist"
-                                                                                    style="height: 0.0616em"
-                                                                                    ><span></span></span
-                                                                                ></span
-                                                                            ></span
-                                                                        ></span
-                                                                    ></span
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\ddddot&lbrace;a&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">‾</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\underline&lbrace;AB&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.8833em; vertical-align: -0.2em"></span><span
-                                        class="mord underline"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span style="top: -2.84em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="underline-line"
-                                                            style="border-bottom-width: 0.04em"
-                                                        ></span></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.2em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underline&lbrace;AB&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mstyle mathcolor="#cc0000"><mtext>\underbracket</mtext></mstyle><mrow
-                                                ><mi>A</mi><mi>B</mi></mrow
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\underbracket&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1em; vertical-align: -0.25em"></span><span
-                                        class="mord text"
-                                        style="color: #cc0000"
-                                        ><span class="mord" style="color: #cc0000">\underbracket</span></span
-                                    ><span class="mord"
-                                        ><span class="mord mathnormal">A</span><span
-                                            class="mord mathnormal"
-                                            style="margin-right: 0.05017em">B</span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underbracket&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>a</mi><mo>ˋ</mo></mover></mrow><annotation
-                                            encoding="application/x-tex">\grave&lbrace;a&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.6944em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6944em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal">a</span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.25em"><span class="mord">ˋ</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\grave&lbrace;a&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mtext>X</mtext><mo stretchy="true">‾</mo></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex">\underbar&lbrace;X&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.8833em; vertical-align: -0.2em"></span><span
-                                        class="mord underline"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span style="top: -2.84em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="underline-line"
-                                                            style="border-bottom-width: 0.04em"
-                                                        ></span></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord text"><span class="mord">X</span></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.2em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underbar&lbrace;X&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">undefined</mo
-                                                ></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\overlinesegment&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 1.2053em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.6833em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><span class="halfarrow-left" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M40 281 V428 H0 V94 H40 V241 H400000 v40z
-M40 281 V428 H0 V94 H40 V241 H400000 v40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="halfarrow-right" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M399960 241 V94 h40 V428 h-40 V281 H0 v-40z
-M399960 241 V94 h40 V428 h-40 V281 H0 v-40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\overlinesegment&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow><mover accent="true"><mi>θ</mi><mo>^</mo></mover></mrow><annotation
-                                            encoding="application/x-tex">\hat&lbrace;\theta&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.9579em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.9579em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord mathnormal"
-                                                            style="margin-right: 0.02778em">θ</span
-                                                        ></span
-                                                    ><span style="top: -3.2634em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="accent-body"
-                                                            style="left: -0.1667em"><span class="mord">^</span></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\hat&lbrace;\theta&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>a</mi><mi>c</mi></mrow><mo stretchy="true">ˇ</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\widecheck&lbrace;ac&rbrace;
-                                        </annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.7306em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.7306em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">a</span><span
-                                                                class="mord mathnormal">c</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.4306em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            style="height: 0.3em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="100%"
-                                                                height="0.3em"
-                                                                viewBox="0 0 2364 300"
-                                                                preserveAspectRatio="none"
-                                                            >
-                                                                <path
-                                                                    d="M1181,220h2l1171,-176c6,0,10,-5,10,-11l-2,-23c-1,-6,-5,-10,
--11,-10h-1l-1168,153l-1167,-153h-1c-6,0,-10,4,-11,10l-2,23c-1,6,4,11,10,11z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\widecheck&lbrace;ac&rbrace; </code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><munder accentunder="true"
-                                                ><mrow><mi>A</mi><mi>B</mi></mrow><mo stretchy="true">undefined</mo
-                                                ></munder
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex"
-                                            >\underlinesegment&lbrace;AB&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 1.2053em; vertical-align: -0.522em"></span><span
-                                        class="mord accentunder"
-                                        ><span class="vlist-t vlist-t2"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.6833em"
-                                                    ><span class="svg-align" style="top: -2.478em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="stretchy"
-                                                            style="height: 0.522em; min-width: 0.888em"
-                                                            ><span class="halfarrow-left" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMinYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M40 281 V428 H0 V94 H40 V241 H400000 v40z
-M40 281 V428 H0 V94 H40 V241 H400000 v40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ><span class="halfarrow-right" style="height: 0.522em"
-                                                                ><svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="400em"
-                                                                    height="0.522em"
-                                                                    viewBox="0 0 400000 522"
-                                                                    preserveAspectRatio="xMaxYMin slice"
-                                                                >
-                                                                    <path
-                                                                        d="M399960 241 V94 h40 V428 h-40 V281 H0 v-40z
-M399960 241 V94 h40 V428 h-40 V281 H0 v-40z"
-                                                                    /></svg
-                                                                ></span
-                                                            ></span
-                                                        ></span
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">A</span><span
-                                                                class="mord mathnormal"
-                                                                style="margin-right: 0.05017em">B</span
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ><span class="vlist-s">​</span></span
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.522em"><span></span></span></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\underlinesegment&lbrace;AB&rbrace;</code>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow></mrow><annotation encoding="application/x-tex"></annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"></span></span
-                        ></span
-                    ><code></code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow
-                                            ><mover accent="true"
-                                                ><mrow><mi>a</mi><mi>c</mi></mrow><mo stretchy="true">^</mo></mover
-                                            ></mrow
-                                        ><annotation encoding="application/x-tex">\widehat&lbrace;ac&rbrace;</annotation
-                                        ></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"
-                                ><span class="base"
-                                    ><span class="strut" style="height: 0.7306em"></span><span class="mord accent"
-                                        ><span class="vlist-t"
-                                            ><span class="vlist-r"
-                                                ><span class="vlist" style="height: 0.7306em"
-                                                    ><span style="top: -3em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            class="mord"
-                                                            ><span class="mord mathnormal">a</span><span
-                                                                class="mord mathnormal">c</span
-                                                            ></span
-                                                        ></span
-                                                    ><span class="svg-align" style="top: -3.4306em"
-                                                        ><span class="pstrut" style="height: 3em"></span><span
-                                                            style="height: 0.3em"
-                                                            ><svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                width="100%"
-                                                                height="0.3em"
-                                                                viewBox="0 0 2364 300"
-                                                                preserveAspectRatio="none"
-                                                            >
-                                                                <path
-                                                                    d="M1181 0h2l1171 176c6 0 10 5 10 11l-2 23c-1 6-5 10
--11 10h-1L1182 67 15 220h-1c-6 0-10-4-11-10l-2-23c-1-6 4-11 10-11z"
-                                                                /></svg
-                                                            ></span
-                                                        ></span
-                                                    ></span
-                                                ></span
-                                            ></span
-                                        ></span
-                                    ></span
-                                ></span
-                            ></span
-                        ></span
-                    ><code>\widehat&lbrace;ac&rbrace;</code>
-                </td>
-                <td>
-                    <span class="katex-display"
-                        ><span class="katex"
-                            ><span class="katex-mathml"
-                                ><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"
-                                    ><semantics
-                                        ><mrow></mrow><annotation encoding="application/x-tex"></annotation></semantics
-                                    ></math
-                                ></span
-                            ><span class="katex-html" aria-hidden="true"></span></span
-                        ></span
-                    ><code></code>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</details>

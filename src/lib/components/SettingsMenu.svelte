@@ -297,6 +297,7 @@
         padding-left: 12px;
         padding-right: 12px;
         padding-top: 12px;
+        overflow: auto;
     }
 
     .side-bar-content > div:first-child {

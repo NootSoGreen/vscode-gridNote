@@ -88,6 +88,7 @@
                 console.log(updatedPage);
 
                 let noteList = page.noteList();
+                console.log(noteList);
 
                 for (let note in updatedPage.notes) {
                     //if note already loaded, check for updated properties
@@ -101,16 +102,18 @@
                     }
                 }
 
+                //delete remaining notes not removed above
                 for (let note of noteList) {
                     page.deleteNote(note);
                 }
 
                 // Update webview's content
-                //page.initNotes(updatedPage);
+                //page.initPage(updatedPage);
                 if (updatedPage.settings) {
                     page.settings.updateState(updatedPage.settings);
                 }
 
+                //set baseUri to be used when accessing/displaying local images
                 if (page.settings.baseUri != message.baseUri) {
                     page.settings.baseUri = message.baseUri;
                     marked.use(baseUrl(page.settings.baseUri));
@@ -148,7 +151,7 @@
     // State lets us save information across these re-loads
     const st = vscode.getState();
     if (st) {
-        page.initNotes(JSON.parse(st.text), st.baseUri, st.noteDisplayTypes, updateState);
+        page.initPage(JSON.parse(st.text), st.baseUri, st.noteDisplayTypes, updateState);
         marked.use(baseUrl(st.baseUri));
         showSettings = st?.showSettings ?? false;
         sortIndex = st?.sortIndex ?? 1;

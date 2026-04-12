@@ -30,8 +30,27 @@ export class Note {
     #updateForced = false;
 
     /**
+     * An object containing various properties describing a note
+     * @typedef {Object} noteObj
+     * @property {String} id
+     * @property {String} type
+     * @property {number} col
+     * @property {number} row
+     * @property {number} colSpan
+     * @property {number} rowSpan
+     * @property {String} color
+     * @property {String} content
+     * @property {number} lastEdit
+     * @property {number} created
+     * @property {String} title
+     * @property {boolean} displayTitle
+     * @property {String} imageSizing
+     * @property {Date|null} dueDate
+     */
+
+    /**
      * Create note
-     * @param {Object} obj
+     * @param {noteObj} obj
      * @param {String} id
      * @param {function} updateState
      * @param {String} [displayType=""] Rendered note state. "" will just show the content, "edit" will show edit state
@@ -201,7 +220,7 @@ export class Note {
 
     /**
      * Timestamp of last edit
-     * @type {Date}
+     * @type {Date|null}
      */
     get created() {
         return this.#created;
@@ -287,8 +306,8 @@ export class Note {
     }
 
     /**
-     * Returns due date of note
-     * @type {Date}
+     * Returns note due date
+     * @type {Date|null}
      */
     get dueDate() {
         return this.#dueDate;
@@ -296,7 +315,7 @@ export class Note {
 
     /**
      * Sets due date
-     * @param {Date} dueDate
+     * @param {Date|null} dueDate
      */
     set dueDate(dueDate) {
         if (this.#dueDate != dueDate) {
@@ -381,7 +400,7 @@ export class Note {
     /**
      * Updates note - there must be a better way to do this :/
      * Can't just use setter as setter triggers update message, which we would want to avoid here
-     * @param {Object} newState - object with updated properties of note
+     * @param {noteObj} newState - object with updated properties of note
      */
     updateState(newState) {
         if (!this.#allowNoteEdit) {
@@ -460,8 +479,15 @@ export class PageSettings {
     #countUpdates = 0;
 
     /**
+     * contains page settings
+     * @typedef {Object} pageSettings
+     * @property {number} columns
+     * @property {String} texMacros
+     */
+
+    /**
      * Init page settings
-     * @param {Object} obj - object providing no. columns for page
+     * @param {pageSettings} obj - object providing no. columns for page
      * @param {String} baseUri
      */
     constructor(obj, baseUri) {
@@ -551,7 +577,7 @@ export class PageSettings {
     /**
      * Updates note - there must be a better way to do this :/
      * Can't just use setter as setter triggers update message, which we would want to avoid here
-     * @param {Object} newState - object with updated properties of note
+     * @param {pageSettings} newState - object with updated properties of note
      */
     updateState(newState) {
         if (this.#columns != (newState.columns ?? 12)) {
@@ -565,6 +591,13 @@ export class PageSettings {
 }
 
 /**
+ * Describes page
+ * @typedef {Object} pageObj
+ * @property {Object} notes
+ * @property {pageSettings} settings
+ */
+
+/**
  * Page
  */
 export class Page {
@@ -573,10 +606,10 @@ export class Page {
 
     /**
      * Init page - object can be passed when
-     * @param {Object} obj - object providing notes of page
+     * @param {pageObj} obj - object providing notes of page
      */
     constructor(obj) {
-        this.initNotes(obj);
+        this.initPage(obj);
     }
 
     /**
@@ -595,7 +628,7 @@ export class Page {
      * Adds new note
      *
      *
-     * @param {object} newNote
+     * @param {Object} newNote
      * @param {number} [newNote.col=1] col
      * @param {number} [newNote.row=1] row
      * @param {number} [newNote.colSpan=1] colSpan
@@ -606,7 +639,7 @@ export class Page {
      * @param {string} [newNote.title=""] title
      * @param {boolean} [newNote.displayTitle=true] displayTitle
      * @param {string} [newNote.imageSizing="contain"] imageSizing
-     * @param {Date} [newNote.dueDate="Yellow"] dueDate
+     * @param {Date|null} [newNote.dueDate=null] dueDate
      */
     addNoteMsg({
         col = 1,
@@ -643,7 +676,7 @@ export class Page {
      * Adds new note
      *
      * @param {string} id
-     * @param {object} obj
+     * @param {noteObj} obj
      * @param {function} updateState
      */
     addNote(id, obj, updateState) {
@@ -669,14 +702,14 @@ export class Page {
     }
 
     /**
-     * Initialises note
+     * Initialises page
      *
-     * @param {object} obj
-     * @param {string} baseUri
-     * @param {object} noteDisplayTypes
-     * @param {function} updateState
+     * @param {pageObj} obj
+     * @param {string} [baseUri=""]
+     * @param {object} [noteDisplayTypes={}]
+     * @param {function} [updateState=()=>{}]
      */
-    initNotes(obj, baseUri = "", noteDisplayTypes = {}, updateState = null) {
+    initPage(obj, baseUri = "", noteDisplayTypes = {}, updateState = () => {}) {
         for (let note in obj?.notes) {
             this._page[note] = new Note(obj.notes[note], note, updateState, noteDisplayTypes[note]);
         }
@@ -685,9 +718,9 @@ export class Page {
     }
 
     /**
-     * Returns notes in an array
+     * Returns note ids in an array
      *
-     * @returns {array}
+     * @returns {String[]}
      */
     noteList() {
         return Object.keys(this._page);

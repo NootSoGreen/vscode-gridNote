@@ -49,7 +49,7 @@
         return `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, "0")}-${dateObj.getDate().toString().padStart(2, "0")}T${dateObj.getHours().toString().padStart(2, "0")}:${dateObj.getMinutes().toString().padStart(2, "0")}`;
     }
 
-    let dueDateTimestamp = $state(dateToTimestamp(note.dueDate));
+    let dueDateTimestamp = $derived(dateToTimestamp(note.dueDate));
 
     $effect(() => {
         let newTimestamp = timestampToDate(dueDateTimestamp);

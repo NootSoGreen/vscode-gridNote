@@ -3,6 +3,7 @@
 - Fixed note links (event propagation from clicking on note/ link within note enabled)
 - Fixed sync between split pages (page changes are still debounced [changes stored after 0.5s has passed since last change])
 - Store note sort to display correct sort button when switching between note docs
+- Added TeX quick reference docs (copied from [KaTeX Supported Functions](https://katex.org/docs/supported))
 
 # 0.2.4
 
